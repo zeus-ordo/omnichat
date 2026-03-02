@@ -176,6 +176,39 @@ TT|
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )', tenant_schema);
+    
+    -- Tickets table
+    EXECUTE format('
+        CREATE TABLE IF NOT EXISTS %I.tickets (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            conversation_id UUID,
+            subject VARCHAR(255) NOT NULL,
+            description TEXT,
+            status VARCHAR(50) NOT NULL DEFAULT ''open'' CHECK (status IN (''open'', ''in_progress'', ''resolved'', ''closed'')),
+            priority VARCHAR(20) NOT NULL DEFAULT ''medium'' CHECK (priority IN (''high'', ''medium'', ''low'')),
+            assigned_agent_id UUID,
+            created_by UUID,
+            resolved_at TIMESTAMP WITH TIME ZONE,
+            closed_at TIMESTAMP WITH TIME ZONE,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )', tenant_schema);
+    
+    -- Broadcasts table
+    EXECUTE format('
+        CREATE TABLE IF NOT EXISTS %I.broadcasts (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            subject VARCHAR(255) NOT NULL,
+            content TEXT NOT NULL,
+            channel VARCHAR(50) NOT NULL DEFAULT ''all'' CHECK (channel IN (''all'', ''web'', ''line'', ''facebook'', ''api'')),
+            status VARCHAR(50) NOT NULL DEFAULT ''draft'' CHECK (status IN (''draft'', ''scheduled'', ''sent'', ''cancelled'')),
+            scheduled_at TIMESTAMP WITH TIME ZONE,
+            sent_at TIMESTAMP WITH TIME ZONE,
+            recipient_count INTEGER DEFAULT 0,
+            created_by UUID,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )', tenant_schema);
         CREATE TABLE IF NOT EXISTS %I.survey_responses (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             conversation_id UUID NOT NULL,
@@ -189,6 +222,9 @@ TT|
     EXECUTE format('CREATE INDEX IF NOT EXISTS %I_messages_conversation ON %I.messages(conversation_id)', tenant_schema, tenant_schema);
     EXECUTE format('CREATE INDEX IF NOT EXISTS %I_documents_status ON %I.documents(status)', tenant_schema, tenant_schema);
     EXECUTE format('CREATE INDEX IF NOT EXISTS %I_surveys_active ON %I.surveys(is_active)', tenant_schema, tenant_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS %I_tickets_status ON %I.tickets(status)', tenant_schema, tenant_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS %I_tickets_assigned ON %I.tickets(assigned_agent_id)', tenant_schema, tenant_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS %I_broadcasts_status ON %I.broadcasts(status)', tenant_schema, tenant_schema);
     
     -- Create updated_at trigger
     EXECUTE format('
@@ -213,7 +249,13 @@ KT|        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_sch
 ZP|
 HM|    EXECUTE format('
         CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.message_templates
-KT|        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
+    EXECUTE format('
+        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.message_templates
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
+    
+    EXECUTE format('
+        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.tickets
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
         CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.surveys
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
     

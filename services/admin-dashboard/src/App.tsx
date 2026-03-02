@@ -11,6 +11,9 @@ import Surveys from './pages/Surveys'
 import Bots from './pages/Bots'
 import Users from './pages/Users'
 import ApiKeys from './pages/ApiKeys'
+import MessageTemplates from './pages/MessageTemplates'
+import Tickets from './pages/Tickets'
+import Broadcasts from './pages/Broadcasts'
 import MessageTemplates from '../src/pages/MessageTemplates'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -39,6 +42,8 @@ export default function App() {
                   <Route path="/users" element={<Users />} />
                   <Route path="/api-keys" element={<ApiKeys />} />
                   <Route path="/message-templates" element={<MessageTemplates />} />
+                  <Route path="/tickets" element={<Tickets />} />
+                  <Route path="/broadcasts" element={<Broadcasts />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>
               </Layout>

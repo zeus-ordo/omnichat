@@ -13,6 +13,8 @@ import { AiModule } from './ai/ai.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SurveysModule } from './surveys/surveys.module';
+import { TicketsModule } from './tickets/tickets.module';
+import { BroadcastsModule } from './broadcasts/broadcasts.module';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
 
 @Module({
@@ -84,6 +86,8 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
     WebhooksModule,
     AnalyticsModule,
     SurveysModule,
+    TicketsModule,
+    BroadcastsModule,
   ],
 })
 export class AppModule {

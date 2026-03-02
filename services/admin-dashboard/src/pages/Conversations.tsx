@@ -12,6 +12,12 @@ export default function Conversations() {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const { t } = useLanguageStore()
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [channelFilter, setChannelFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('')
 
   useEffect(() => {
     loadConversations()
@@ -23,9 +29,31 @@ export default function Conversations() {
     }
   }, [id])
 
+  useEffect(() => {
+    loadConversations()
+  }, [search, statusFilter, channelFilter, dateFrom, dateTo, priorityFilter])
+
   const loadConversations = async () => {
     try {
       const response = await api.get('/conversations')
+      setConversations(response.data.data || [])
+    } catch (error) {
+      console.error('Failed to load conversations', error)
+    } finally {
+      setLoading(false)
+    }
+  const loadConversations = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (search) params.append('search', search)
+      if (statusFilter) params.append('status', statusFilter)
+      if (channelFilter) params.append('channel', channelFilter)
+      if (dateFrom) params.append('date_from', dateFrom)
+      if (dateTo) params.append('date_to', dateTo)
+      if (priorityFilter) params.append('priority', priorityFilter)
+      
+      const response = await api.get(`/conversations?${params.toString()}`)
       setConversations(response.data.data || [])
     } catch (error) {
       console.error('Failed to load conversations', error)
@@ -67,6 +95,72 @@ export default function Conversations() {
       <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
         <div className="p-4 border-b border-gray-200">
           <h1 className="text-xl font-bold">Conversations</h1>
+        <div className="p-4 border-b border-gray-200 space-y-3">
+          <h1 className="text-xl font-bold">{t('conversations') || 'Conversations'}</h1>
+          
+          {/* Search */}
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search messages..."
+            className="input-field w-full"
+          />
+          
+          {/* Filters */}
+          <div className="flex gap-2 flex-wrap">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="input-field text-sm"
+            >
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="closed">Closed</option>
+              <option value="archived">Archived</option>
+            </select>
+            
+            <select
+              value={channelFilter}
+              onChange={(e) => setChannelFilter(e.target.value)}
+              className="input-field text-sm"
+            >
+              <option value="">All Channels</option>
+              <option value="web">Web</option>
+              <option value="line">LINE</option>
+              <option value="facebook">Facebook</option>
+              <option value="api">API</option>
+            </select>
+            
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="input-field text-sm"
+            >
+              <option value="">All Priority</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          
+          {/* Date Range */}
+          <div className="flex gap-2">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="input-field text-sm flex-1"
+              placeholder="From date"
+            />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="input-field text-sm flex-1"
+              placeholder="To date"
+            />
+          </div>
         </div>
         <div className="flex-1 overflow-auto">
           {loading ? (

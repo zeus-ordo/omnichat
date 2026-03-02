@@ -58,6 +58,40 @@ export class ConversationsService {
       whereClause += ` AND assigned_agent_id = $${paramIndex}`;
       params.push(assigned_agent_id);
       paramIndex++;
+    if (assigned_agent_id) {
+      whereClause += ` AND assigned_agent_id = $${paramIndex}`;
+      params.push(assigned_agent_id);
+      paramIndex++;
+    }
+
+    // Search by keyword in messages
+    if (query.search) {
+      whereClause += ` AND id IN (
+        SELECT DISTINCT conversation_id FROM ${tenantSchema}.messages 
+        WHERE content ILIKE $${paramIndex}
+      )`;
+      params.push(`%${query.search}%`);
+      paramIndex++;
+    }
+
+    // Date range filter
+    if (query.date_from) {
+      whereClause += ` AND created_at >= $${paramIndex}`;
+      params.push(query.date_from);
+      paramIndex++;
+    }
+
+    if (query.date_to) {
+      whereClause += ` AND created_at <= $${paramIndex}`;
+      params.push(query.date_to);
+      paramIndex++;
+    }
+
+    // Priority filter (if metadata->>'priority' exists)
+    if (query.priority) {
+      whereClause += ` AND (metadata->>'priority') = $${paramIndex}`;
+      params.push(query.priority);
+      paramIndex++;
     }
 
     const countResult = await this.dataSource.query(

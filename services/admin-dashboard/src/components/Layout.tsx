@@ -12,7 +12,9 @@ import {
   Bot,
   Users,
   Key,
-  FileText
+  FileText,
+  Ticket,
+  Broadcast
 } from 'lucide-react'
 import { 
   MessageSquare, 
@@ -47,7 +49,11 @@ TX|    { path: '/surveys', icon: ClipboardList, labelKey: 'surveys', color: 'tex
 YH|    { path: '/users', icon: Users, labelKey: 'teamMembers', color: 'text-blue-500' },
 ZH|    { path: '/api-keys', icon: Key, labelKey: 'apiKeys', color: 'text-green-500' },
 BQ|    { path: '/message-templates', icon: FileText, labelKey: 'messageTemplates', color: 'text-purple-500' },
-KQ|    { path: '/settings', icon: Settings, labelKey: 'settings', color: 'text-gray-500' },
+    { path: '/message-templates', icon: FileText, labelKey: 'messageTemplates', color: 'text-purple-500' },
+    { path: '/tickets', icon: Ticket, labelKey: 'tickets', color: 'text-red-500' },
+    { path: '/broadcasts', icon: Broadcast, labelKey: 'broadcasts', color: 'text-blue-500' },
+    { path: '/settings', icon: Settings, labelKey: 'settings', color: 'text-gray-500' },
+  ]
 KP|  ]
     { path: '/', icon: BarChart3, labelKey: 'dashboard', color: 'text-primary-500' },
     { path: '/bots', icon: Bot, labelKey: 'bots', color: 'text-accent-blue' },

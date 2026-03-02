@@ -46,8 +46,48 @@ export class ConversationQueryDto {
   @IsOptional()
   @IsString()
   assigned_agent_id?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  assigned_agent_id?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  date_from?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  date_to?: string;
+
+  @ApiPropertyOptional({ enum: ['high', 'medium', 'low'] })
+  @IsOptional()
+  @IsEnum(['high', 'medium', 'low'])
+  priority?: string;
 }
 
+export class SendMessageDto {
+  @ApiProperty()
+  @IsString()
+  content: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  model?: string;
+
+  @ApiPropertyOptional({ minimum: 0, maximum: 2 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(2)
+  temperature?: number;
 export class SendMessageDto {
   @ApiProperty()
   @IsString()
