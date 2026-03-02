@@ -1,0 +1,146 @@
+# OmniBot AI 資安弱點掃描報告
+
+## 報告資訊
+
+| 項目 | 內容 |
+|------|------|
+| 專案名稱 | OmniBot AI |
+| 掃描日期 | 2026-03-02 |
+| 掃描類型 | 靜態程式碼分析 + 設定檔檢視 |
+| 報告版本 | 1.0.0 |
+
+---
+
+## 執行摘要
+
+本次掃描共發現 **6 項資安問題**，其中：
+
+| 嚴重程度 | 數量 |
+|----------|------|
+| 嚴重 (Critical) | 1 |
+| 高 (High) | 2 |
+| 中 (Medium) | 2 |
+| 低 (Low) | 1 |
+
+---
+
+## 發現問題明細
+
+### 🔴 嚴重 (Critical)
+
+#### 1. SQL 注入漏洞 (SQL Injection)
+
+| 項目 | 內容 |
+|------|------|
+| 編號 | VULN-001 |
+| 位置 | `services/api/src/common/middleware/tenant.middleware.ts:72` |
+| 問題描述 | tenant.schema_name 變數直接拼接到 SQL 查詢中，未使用參數化查詢 |
+| 問題程式碼 | `SET search_path TO ${tenant.schema_name}, public` |
+| 風險說明 | 攻擊者可透過控制 API Key 來注入惡意 SQL 指令，取得未經授權的資料存取權限 |
+| 修復建議 | 使用參數化查詢或白名單驗證 schema_name |
+
+---
+
+### 🟠 高 (High)
+
+#### 2. API 金鑰洩漏
+
+| 項目 | 內容 |
+|------|------|
+| 編號 | VULN-002 |
+| 位置 | `.env:14` |
+| 問題描述 | OpenAI API 金鑰以明文形式儲存於環境變數檔案中 |
+| 問題程式碼 | `OPENAI_API_KEY=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` |
+| 風險說明 | API 金鑰洩漏可能導致帳單被盜用、服務濫用 |
+| 修復建議 | 1. 立即輪換此 API 金鑰 2. 使用金鑰管理服務 (AWS Secrets Manager / HashiCorp Vault) 3. 勿將實際金鑰提交至版本控制 |
+
+#### 3. JWT 密鑰弱化
+
+| 項目 | 內容 |
+|------|------|
+| 編號 | VULN-003 |
+| 位置 | `.env:7` |
+| 問題描述 | JWT_SECRET 使用預設弱密碼 |
+| 問題程式碼 | `JWT_SECRET=your-super-secret-jwt-key-change-in-production` |
+| 風險說明 | 攻擊者可能猜測或取得預設密鑰，偽造 JWT Token 冒充任意用戶 |
+| 修復建議 | 1. 使用強隨機密鑰 (至少 256 位元) 2. 生產環境務必變更 3. 定期輪換 |
+
+---
+
+### 🟡 中 (Medium)
+
+#### 4. CORS 設定過於寬鬆
+
+| 項目 | 內容 |
+|------|------|
+| 編號 | VULN-004 |
+| 位置 | `services/api/src/main.ts:8-12` |
+| 問題描述 | CORS 允許所有來源 (origin: '*') |
+| 問題程式碼 | `cors: { origin: '*', ... }` |
+| 風險說明 | 任意網站都能向 API 發送跨域請求，增加 CSRF 攻擊面 |
+| 修復建議 | 指定明確的允許來源網域，例如：`origin: ['https://admin.omnibot.ai', 'https://yourdomain.com']` |
+
+#### 5. 缺少 Rate Limiting
+
+| 項目 | 內容 |
+|------|------|
+| 編號 | VULN-005 |
+| 位置 | API 服務全域 |
+| 問題描述 | 系統未實作 API 請求頻率限制 |
+| 風險說明 | 容易遭受暴力破解、服務阻斷攻擊 (DoS)、API 濫用 |
+| 修復建議 | 1. 使用 @nestjs/throttler 套件 2. 針對登入端點施加更嚴格限制 3. 依用戶等級設定不同限制 |
+
+---
+
+### 🟢 低 (Low)
+
+#### 6. 預設密碼使用
+
+| 項目 | 內容 |
+|------|------|
+| 編號 | VULN-006 |
+| 位置 | `services/admin-dashboard/src/pages/Login.tsx` |
+| 問題描述 | 程式碼中包含測試用預設密碼 |
+| 問題程式碼 | `admin123` |
+| 風險說明 | 開發階段的測試資料可能殘留至正式環境 |
+| 修復建議 | 1. 移除所有測試用帳號密碼 2. 建立正式環境的初始化腳本 3. 強制首次登入變更密碼 |
+
+---
+
+## 建議修復優先順序
+
+| 優先順序 | 編號 | 問題名稱 |
+|----------|------|----------|
+| 1 | VULN-001 | SQL 注入漏洞 |
+| 2 | VULN-002 | API 金鑰洩漏 |
+| 3 | VULN-003 | JWT 密鑰弱化 |
+| 4 | VULN-004 | CORS 過寬 |
+| 5 | VULN-005 | 缺少 Rate Limiting |
+| 6 | VULN-006 | 預設密碼 |
+
+---
+
+## 其它建議事項
+
+### 加密傳輸
+- 尚未在 Nginx 中設定 SSL/TLS 協議與加密套件
+- 建議啟用 HTTPS 並停用 TLS 1.0/1.1
+
+### 日誌稽核
+- 建議增加登入失敗日誌
+- 建議記錄 API 存取稽核軌跡
+
+### 依賴套件
+- 建議定期使用 npm audit / pip-audit 檢查已知漏洞
+
+---
+
+## 結語
+
+本次掃描發現 1 項 SQL 注入漏洞屬高風險問題，請優先處理。CORS 與 Rate Limiting 問題亦建議儘速修正，以強化系統整體安全性。
+
+---
+
+**報告產生時間**: 2026-03-02  
+**掃描工具**: 自訂靜態分析脚本  
+**建議後續**: 修復後建議進行滲透測試驗證

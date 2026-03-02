@@ -1,0 +1,223 @@
+# OmniBot AI 專案技術特性說明
+
+## 一、系統架構總覽
+
+OmniBot AI 是一個基於 AI 的多租戶客服機器人系統，採用現代化的微服務架構設計。系統旨在為企業提供一個可擴展、安全且功能豐富的 AI 客服解決方案。
+
+### 1.1 核心設計原則
+
+| 原則 | 說明 |
+|------|------|
+| 多租戶隔離 | 每個客戶擁有獨立的資料庫 Schema，確保資料完全隔離 |
+| 微服務架構 | 各服務獨立部署，可獨立擴展，降低系統耦合度 |
+| 雲端原生 | 容器化部署支援 Kubernetes/Docker Swarm |
+| API優先 | RESTful API 設計，支援第三方系統整合 |
+
+---
+
+## 二、技術堆疊詳解
+
+### 2.1 後端服務 (API Service)
+
+| 項目 | 技術選擇 | 版本 |
+|------|----------|------|
+| 框架 | NestJS | 10.3.0 |
+| 語言 | TypeScript | 5.3.3 |
+| ORM | TypeORM | 0.3.19 |
+| 資料庫 | PostgreSQL | 15 |
+| 快取 | Redis | 7 |
+| 認證 | JWT + Passport | - |
+| API 文件 | Swagger (OpenAPI) | 7.2.0 |
+| 即時通訊 | Socket.io | 4.7.4 |
+
+關鍵模組：
+- AuthModule - JWT 認證、API Key 驗證
+- UsersModule - 用戶管理、權限控制
+- BotsModule - 機器人設定管理
+- ConversationsModule - 對話管理
+- ChannelsModule - 多渠道整合 (LINE, Facebook, API)
+- KnowledgeBaseModule - 知識庫管理、RAG 搜尋
+- SurveysModule - 問卷管理
+- MessagesModule - 訊息處理與轉發
+
+### 2.2 AI 引擎 (AI Engine)
+
+| 項目 | 技術選擇 | 版本 |
+|------|----------|------|
+| 框架 | FastAPI | 0.109.0 |
+| 語言 | Python | 3.11+ |
+| LLM 客戶端 | OpenAI SDK | 1.10.0 |
+| LLM 客戶端 | Anthropic SDK | 0.18.0 |
+| 向量資料庫 | Qdrant | 1.7.4 |
+| 向量嵌入 | OpenAI Embeddings | - |
+| 網頁框架 | Uvicorn | 0.27.0 |
+
+核心功能：
+- 多模型路由 (GPT-4o, Claude 3.5 Sonnet)
+- RAG (檢索增強生成) 問答系統
+- 文件處理 (PDF, DOCX)
+- 向量嵌入與相似度搜尋
+- 對話上下文管理
+
+### 2.3 管理後台 (Admin Dashboard)
+
+| 項目 | 技術選擇 | 版本 |
+|------|----------|------|
+| 框架 | React | 18.2.0 |
+| 語言 | TypeScript | 5.3.3 |
+| 建置工具 | Vite | 5.1.0 |
+| 路由 | React Router DOM | 6.22.0 |
+| 狀態管理 | Zustand | 4.5.0 |
+| UI 框架 | Tailwind CSS | 3.4.1 |
+| 圖示 | Lucide React | 0.330.0 |
+| HTTP 客戶端 | Axios | 1.6.7 |
+
+功能模組：
+- 儀表板 - 統計數據與快速操作
+- 機器人管理 - 建立、編輯、刪除機器人
+- 對話管理 - 即時對話監控與處理
+- 知識庫 - 文件上傳與向量索引
+- 頻道設定 - LINE、Facebook、Webhook 配置
+- 問卷設計 - 客戶滿意度調查
+- 系統設定 - 全域配置
+
+### 2.4 網站小工具 (Chat Widget)
+
+| 項目 | 技術選擇 | 版本 |
+|------|----------|------|
+| 框架 | React | 18.2.0 |
+| 建置工具 | Vite | 5.1.0 |
+| 狀態管理 | Zustand | 4.5.0 |
+| 即時通訊 | Socket.io Client | 4.7.4 |
+
+特性：
+- 可嵌入任何網站
+- 即時對話
+- 支援多人對話
+- 自定義樣式
+
+---
+
+## 三基礎設施
+
+### 3.1 容器化架構
+
+| 服務 | 容器映像 | 說明 |
+|------|----------|------|
+| API | omnibot-api | NestJS 後端服務 |
+| AI Engine | omnibot-ai-engine | Python AI 處理 |
+| Admin | omnibot-admin | React 管理後台 |
+| Widget | omnibot-widget | 網站聊天小工具 |
+| PostgreSQL | postgres:15-alpine | 主資料庫 |
+| Redis | redis:7-alpine | 快取與會話 |
+| Qdrant | qdrant:v1.7.4 | 向量資料庫 |
+| Nginx | nginx:alpine | 反向代理 |
+| RabbitMQ | rabbitmq:3-management-alpine | 訊息佇列 |
+
+### 3.2 網路架構
+
+- 網路模式: Bridge (Docker Compose)
+- 網路名稱: omnibot-network
+- 對外服務: Nginx 反向代理統一入口
+
+### 3.3 資料流向
+
+用戶瀏覽器
+    ↓
+Nginx (Port 80/443)
+    ↓
+┌─────────────────────────────────────────────┐
+│              Internal Network               │
+├─────────────────────────────────────────────┤
+│  Admin Dashboard ←→ API ←→ AI Engine       │
+│         ↓              ↓          ↓        │
+│   PostgreSQL      Redis      Qdrant        │
+└─────────────────────────────────────────────┘
+
+---
+
+## 四、安全性設計
+
+### 4.1 認證與授權
+
+| 機制 | 說明 |
+|------|------|
+| JWT Token | 7 天有效期，可配置 |
+| API Key | 每個租戶獨立金鑰 |
+| 密碼雜湊 | Bcrypt 加密 |
+| CORS | 跨域請求控制 |
+| Rate Limiting | API 請求頻率限制 |
+
+### 4.2 資料隔離
+
+- Schema 隔離: 每個租戶擁有獨立 PostgreSQL Schema
+- 向量子空間: Qdrant 中租戶資料分區儲存
+- Redis 隔離: 使用前綴區分不同租戶資料
+
+### 4.3 傳輸安全
+
+- HTTPS/SSL 支援 (Nginx 配置)
+- 內部服務間通訊可啟用 TLS
+- 敏感資訊透過環境變數管理
+
+---
+
+## 五、擴展性設計
+
+### 5.1 水平擴展
+
+| 服務 | 擴展策略 |
+|------|----------|
+| API | 無狀態，可複製多個實例 |
+| AI Engine | GPU 資源池化，依負載擴展 |
+| Admin Widget | 靜態資源，可 CDN 分發 |
+| PostgreSQL | 讀寫分離 / 分片 |
+| Redis | 叢集模式 |
+| Qdrant | 叢集複製 |
+
+### 5.2 垂直擴展
+
+- 資料庫可增加 CPU/記憶體
+- AI Engine 可增加 GPU 資源
+- Redis 可啟用持久化
+
+---
+
+## 六、監控與維運
+
+### 6.1 日誌管理
+
+- 容器日誌統一收集
+- 結構化日誌格式
+- 日誌保留策略 (7/30/90 天)
+
+### 6.2 健康檢查
+
+| 服務 | 檢查端點 |
+|------|----------|
+| API | /health |
+| Admin | HTTP 200 |
+| PostgreSQL | pg_isready |
+| Redis | ping |
+| Qdrant | 內建健康檢查 |
+
+---
+
+## 七、技術特色總結
+
+| 特色 | 效益 |
+|------|------|
+| NestJS + TypeScript | 企業級穩定性、完整型別安全 |
+| React + Vite | 快速開發、優異的使用者體驗 |
+| FastAPI + Python | 靈活的 AI 模型整合、優異的非同步效能 |
+| Qdrant 向量搜尋 | 高效的語義搜尋能力 |
+| Schema 隔離 | 企業級資料安全保障 |
+| 容器化部署 | 快速部署、彈性擴展 |
+| 多渠道支援 | 統一管理多種客戶溝通管道 |
+
+---
+
+文件資訊
+- 版本: 1.0.0
+- 更新日期: 2026-03-02
+- 維護團隊: OmniBot 技術團隊

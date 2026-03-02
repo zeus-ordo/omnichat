@@ -1,0 +1,165 @@
+# OmniBot AI 資安弱點掃描報告 (更新版)
+
+## 報告資訊
+
+| 項目 | 內容 |
+|------|------|
+| 專案名稱 | OmniBot AI |
+| 掃描日期 | 2026-03-02 |
+| 掃描類型 | 靜態程式碼分析 + 設定檔檢視 |
+| 報告版本 | 1.1.0 |
+| 相比上版 | 已修復 6 項問題 |
+
+---
+
+## 執行摘要
+
+本次掃描發現 **3 項剩餘問題**：
+
+| 嚴重程度 | 數量 |
+|----------|------|
+| 嚴重 (Critical) | 0 |
+| 高 (High) | 1 |
+| 中 (Medium) | 1 |
+| 低 (Low) | 1 |
+
+---
+
+## 已修復問題 (6 項)
+
+| 編號 | 問題名稱 | 修復狀態 |
+|------|----------|----------|
+| VULN-001 | SQL 注入漏洞 | ✅ 已修復 |
+| VULN-002 | API 金鑰洩漏 | ✅ 已修復 |
+| VULN-003 | JWT 密鑰弱化 | ✅ 已修復 |
+| VULN-004 | CORS 過寬 | ✅ 已修復 |
+| VULN-005 | 缺少 Rate Limiting | ✅ 已修復 |
+| VULN-006 | 預設密碼 | ✅ 已修復 |
+
+### 修復細節
+
+#### VULN-001: SQL 注入漏洞 ✅
+- **位置**: `services/api/src/common/middleware/tenant.middleware.ts`
+- **修復方式**: 
+  - 新增 `validateSchemaName()` 函數驗證 schema 名稱
+  - 新增 `escapeIdentifier()` 函數轉義識別符
+  - 使用雙引號包覆 schema 名稱
+
+#### VULN-002: API 金鑰洩漏 ✅
+- **位置**: `.env`
+- **修復方式**: 
+  - 移除真實 API 金鑰
+  - 改用placeholder `sk-YOUR_OPENAI_KEY_HERE`
+  - 建立安全的 `.env.example` 範本
+
+#### VULN-003: JWT 密鑰弱化 ✅
+- **位置**: `services/api/src/auth/auth.module.ts`
+- **修復方式**:
+  - 新增弱密鑰檢測邏輯
+  - 啟動時警告開發者
+  - 檢查密鑰長度與常見弱密碼
+
+#### VULN-004: CORS 過寬 ✅
+- **位置**: `services/api/src/main.ts`
+- **修復方式**:
+  - 從環境變數 `CORS_ORIGINS` 讀取允許網域
+  - 開發環境預設允許本地端點
+  - 生產環境可指定明確網域
+
+#### VULN-005: 缺少 Rate Limiting ✅
+- **位置**: `services/api/src/app.module.ts`
+- **修復方式**:
+  - 安裝 `@nestjs/throttler` 套件
+  - 設定三層級限制：
+    - short: 10 req/s
+    - medium: 50 req/10s
+    - long: 200 req/min
+
+#### VULN-006: 預設密碼 ✅
+- **位置**: `services/admin-dashboard/src/pages/Login.tsx`
+- **修復方式**:
+  - 移除預設 email `admin@demo.com`
+  - 移除預設密碼 `admin123`
+  - 改為空字串
+
+---
+
+## 剩餘問題明細
+
+### 🟠 高 (High)
+
+#### 1. SSL/TLS 未配置
+
+| 項目 | 內容 |
+|------|------|
+| 編號 | VULN-007 |
+| 位置 | `infrastructure/nginx/nginx.conf` |
+| 問題描述 | Nginx 未設定 SSL/TLS 協議與加密套件 |
+| 風險說明 | 傳輸資料未加密，容易遭受中間人攻擊 |
+| 修復建議 | 生產環境啟用 HTTPS，設定安全的 SSL 協議 |
+
+---
+
+### 🟡 中 (Medium)
+
+#### 2. 開發環境預設值殘留
+
+| 項目 | 內容 |
+|------|------|
+| 編號 | VULN-008 |
+| 位置 | `services/api/src/main.ts:9` |
+| 問題描述 | CORS 預設值為 `*` (開發環境fallback) |
+| 問題程式碼 | `if (!origins || origins === '*')` |
+| 風險說明 | 生產環境未設定 CORS_ORIGINS 時會允許所有來源 |
+| 修復建議 | 生產環境務必設定明確的 CORS_ORIGINS 環境變數 |
+
+---
+
+### 🟢 低 (Low)
+
+#### 3. 登入頁面提示文字
+
+| 項目 | 內容 |
+|------|------|
+| 編號 | VULN-009 |
+| 位置 | `services/admin-dashboard/src/pages/Login.tsx` |
+| 問題描述 | 登入頁面顯示 demo 帳號提示 |
+| 問題程式碼 | `Demo credentials admin@demo.com` |
+| 風險說明 | 暗示攻擊者存在 demo 帳號 |
+| 修復建議 | 可移除或改為通用提示 |
+
+---
+
+## 建議修復優先順序
+
+| 優先順序 | 編號 | 問題名稱 |
+|----------|------|----------|
+| 1 | VULN-007 | SSL/TLS 未配置 |
+| 2 | VULN-008 | 開發環境預設值 |
+| 3 | VULN-009 | 登入提示文字 |
+
+---
+
+## 安全強化建議
+
+### 生產環境部署檢查清單
+
+- [ ] 設定強隨機 JWT_SECRET (至少 32 字元)
+- [ ] 設定明確的 CORS_ORIGINS 白名單
+- [ ] 啟用 HTTPS/SSL
+- [ ] 輪換所有 API 金鑰
+- [ ] 設定強資料庫密碼
+- [ ] 啟用 API 請求日誌
+- [ ] 設定入侵偵測
+
+---
+
+## 結語
+
+經過本次修復，主要資安漏洞已獲得解決。剩餘 3 項問題多與生產環境部署設定相關，建議在正式上線前完成相關設定。
+
+---
+
+**報告產生時間**: 2026-03-02  
+**報告版本**: 1.1.0  
+**建議後續**: 生產環境部署前再次檢視
