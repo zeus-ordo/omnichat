@@ -9,6 +9,9 @@ import Settings from './pages/Settings'
 import Channels from './pages/Channels'
 import Surveys from './pages/Surveys'
 import Bots from './pages/Bots'
+import Users from './pages/Users'
+import ApiKeys from './pages/ApiKeys'
+import MessageTemplates from '../src/pages/MessageTemplates'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuthStore()
@@ -33,6 +36,9 @@ export default function App() {
                   <Route path="/channels" element={<Channels />} />
                   <Route path="/surveys" element={<Surveys />} />
                   <Route path="/bots" element={<Bots />} />
+                  <Route path="/users" element={<Users />} />
+                  <Route path="/api-keys" element={<ApiKeys />} />
+                  <Route path="/message-templates" element={<MessageTemplates />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>
               </Layout>

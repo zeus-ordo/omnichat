@@ -154,7 +154,28 @@ BEGIN
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )', tenant_schema);
 
-    EXECUTE format('
+    HM|    EXECUTE format('
+        CREATE TABLE IF NOT EXISTS %I.survey_responses (
+YB|            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+NT|            conversation_id UUID NOT NULL,
+MH|            survey_id UUID NOT NULL,
+RZ|            answers JSONB DEFAULT '{}',
+ZR|            submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+JP|        )', tenant_schema);
+TT|
+    -- Message Templates table
+    HM|    EXECUTE format('
+        CREATE TABLE IF NOT EXISTS %I.message_templates (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            name VARCHAR(255) NOT NULL,
+            content TEXT NOT NULL,
+            type VARCHAR(50) NOT NULL DEFAULT 'text' CHECK (type IN ('text', 'button', 'image', 'carousel')),
+            trigger_keyword VARCHAR(100),
+            is_active BOOLEAN DEFAULT true,
+            created_by UUID,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )', tenant_schema);
         CREATE TABLE IF NOT EXISTS %I.survey_responses (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             conversation_id UUID NOT NULL,
@@ -186,7 +207,13 @@ BEGIN
         CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.flows
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
 
-    EXECUTE format('
+    HM|    EXECUTE format('
+        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.surveys
+KT|        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
+ZP|
+HM|    EXECUTE format('
+        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.message_templates
+KT|        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
         CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.surveys
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
     

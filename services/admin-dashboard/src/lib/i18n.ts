@@ -7,7 +7,11 @@ export const translations = {
     channels: '頻道',
     surveys: '調查問卷',
     settings: '設定',
-    bots: '機器人',
+    YB|    bots: '機器人',
+    logout: '登出',
+    teamMembers: '團隊成員',
+    apiKeys: 'API Keys',
+    messageTemplates: '訊息範本',
     logout: '登出',
     
     // Dashboard

@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { TenantsModule } from './tenants/tenants.module';
+import { UsersModule } from './users/users.module';
 import { ConversationsModule } from './conversations/conversations.module';
 import { MessagesModule } from './messages/messages.module';
 import { DocumentsModule } from './documents/documents.module';
@@ -38,27 +39,6 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
         limit: 200,  // 每分鐘最多 200 個請求
       },
     ]),
-    TypeOrmModule.forRootAsync({
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from './auth/auth.module';
-import { TenantsModule } from './tenants/tenants.module';
-import { ConversationsModule } from './conversations/conversations.module';
-import { MessagesModule } from './messages/messages.module';
-import { DocumentsModule } from './documents/documents.module';
-import { ChannelsModule } from './channels/channels.module';
-import { AiModule } from './ai/ai.module';
-import { WebhooksModule } from './webhooks/webhooks.module';
-import { AnalyticsModule } from './analytics/analytics.module';
-import { SurveysModule } from './surveys/surveys.module';
-import { TenantMiddleware } from './common/middleware/tenant.middleware';
-
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
@@ -95,6 +75,7 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
     }),
     AuthModule,
     TenantsModule,
+    UsersModule,
     ConversationsModule,
     MessagesModule,
     DocumentsModule,
