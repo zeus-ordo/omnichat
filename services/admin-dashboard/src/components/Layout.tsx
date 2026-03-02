@@ -14,19 +14,8 @@ import {
   Key,
   FileText,
   Ticket,
-  Broadcast
-} from 'lucide-react'
-import { 
-  MessageSquare, 
-  BarChart3, 
-  BookOpen, 
-  Settings, 
-  Plug,
-  LogOut,
-  Menu,
-  Sparkles,
-  ClipboardList,
-  Bot
+  Broadcast,
+  Activity
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../store/auth'
@@ -39,28 +28,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { t } = useLanguageStore()
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
-  TX|  const navItems = [
-NB|    { path: '/', icon: BarChart3, labelKey: 'dashboard', color: 'text-primary-500' },
-BJ|    { path: '/bots', icon: Bot, labelKey: 'bots', color: 'text-accent-blue' },
-SH|    { path: '/conversations', icon: MessageSquare, labelKey: 'conversations', color: 'text-accent-teal' },
-ZJ|    { path: '/knowledge-base', icon: BookOpen, labelKey: 'knowledgeBase', color: 'text-accent-orange' },
-TK|    { path: '/channels', icon: Plug, labelKey: 'channels', color: 'text-accent-pink' },
-TX|    { path: '/surveys', icon: ClipboardList, labelKey: 'surveys', color: 'text-accent-purple' },
-YH|    { path: '/users', icon: Users, labelKey: 'teamMembers', color: 'text-blue-500' },
-ZH|    { path: '/api-keys', icon: Key, labelKey: 'apiKeys', color: 'text-green-500' },
-BQ|    { path: '/message-templates', icon: FileText, labelKey: 'messageTemplates', color: 'text-purple-500' },
-    { path: '/message-templates', icon: FileText, labelKey: 'messageTemplates', color: 'text-purple-500' },
-    { path: '/tickets', icon: Ticket, labelKey: 'tickets', color: 'text-red-500' },
-    { path: '/broadcasts', icon: Broadcast, labelKey: 'broadcasts', color: 'text-blue-500' },
-    { path: '/settings', icon: Settings, labelKey: 'settings', color: 'text-gray-500' },
-  ]
-KP|  ]
+  const navItems = [
     { path: '/', icon: BarChart3, labelKey: 'dashboard', color: 'text-primary-500' },
+    { path: '/analytics', icon: Activity, labelKey: 'analytics', color: 'text-blue-500' },
     { path: '/bots', icon: Bot, labelKey: 'bots', color: 'text-accent-blue' },
     { path: '/conversations', icon: MessageSquare, labelKey: 'conversations', color: 'text-accent-teal' },
     { path: '/knowledge-base', icon: BookOpen, labelKey: 'knowledgeBase', color: 'text-accent-orange' },
     { path: '/channels', icon: Plug, labelKey: 'channels', color: 'text-accent-pink' },
     { path: '/surveys', icon: ClipboardList, labelKey: 'surveys', color: 'text-accent-purple' },
+    { path: '/users', icon: Users, labelKey: 'teamMembers', color: 'text-blue-500' },
+    { path: '/api-keys', icon: Key, labelKey: 'apiKeys', color: 'text-green-500' },
+    { path: '/message-templates', icon: FileText, labelKey: 'messageTemplates', color: 'text-purple-500' },
+    { path: '/tickets', icon: Ticket, labelKey: 'tickets', color: 'text-red-500' },
+    { path: '/broadcasts', icon: Broadcast, labelKey: 'broadcasts', color: 'text-blue-500' },
     { path: '/settings', icon: Settings, labelKey: 'settings', color: 'text-gray-500' },
   ]
 

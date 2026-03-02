@@ -14,7 +14,8 @@ import ApiKeys from './pages/ApiKeys'
 import MessageTemplates from './pages/MessageTemplates'
 import Tickets from './pages/Tickets'
 import Broadcasts from './pages/Broadcasts'
-import MessageTemplates from '../src/pages/MessageTemplates'
+import Analytics from './pages/Analytics'
+
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuthStore()
@@ -44,6 +45,7 @@ export default function App() {
                   <Route path="/message-templates" element={<MessageTemplates />} />
                   <Route path="/tickets" element={<Tickets />} />
                   <Route path="/broadcasts" element={<Broadcasts />} />
+                  <Route path="/analytics" element={<Analytics />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>
               </Layout>

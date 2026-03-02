@@ -55,6 +55,13 @@ export default function Channels() {
       icon: Code,
       color: 'bg-purple-500',
       config: true,
+    {
+      id: 'whatsapp',
+      name: t('whatsapp') || 'WhatsApp',
+      description: 'Connect your WhatsApp Business Account',
+      icon: MessageCircle,
+      color: 'bg-green-600',
+      config: true,
     },
   ]
 
@@ -99,6 +106,13 @@ export default function Channels() {
                     <button className="mt-4 btn-secondary flex items-center gap-2 text-sm">
                       <ExternalLink size={16} />
                       {t('configureLINE')}
+                    </button>
+                  )}
+                  
+                  {channel.id === 'whatsapp' && (
+                    <button className="mt-4 btn-secondary flex items-center gap-2 text-sm">
+                      <ExternalLink size={16} />
+                      {t('configureWhatsApp') || 'Configure WhatsApp'}
                     </button>
                   )}
                   
