@@ -5,8 +5,8 @@ import { Sparkles } from 'lucide-react'
 import { useLanguageStore } from '../store/language'
 
 export default function Login() {
-  const [email, setEmail] = useState('admin@demo.com')
-  const [password, setPassword] = useState('admin123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuthStore()
@@ -80,10 +80,6 @@ export default function Login() {
             {loading ? t('signingIn') : t('signIn')}
           </button>
         </form>
-
-        <div className="mt-6 text-center text-sm text-gray-500">
-          {t('defaultCredentials')}
-        </div>
 
         <div className="mt-2 text-center text-sm text-gray-500">
           {t('noAccountYet')}{' '}
