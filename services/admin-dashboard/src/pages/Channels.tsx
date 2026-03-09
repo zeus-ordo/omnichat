@@ -27,35 +27,35 @@ export default function Channels() {
     {
       id: 'web',
       name: t('website') || 'Website',
-      description: 'Embed a chat widget on your website',
+      description: t('channelDescWeb'),
       icon: Code,
       color: 'bg-blue-500',
     },
     {
       id: 'line',
       name: t('LINE') || 'LINE',
-      description: 'Connect your LINE Official Account',
+      description: t('channelDescLine'),
       icon: MessageCircle,
       color: 'bg-green-500',
     },
     {
       id: 'facebook',
       name: t('Facebook') || 'Facebook',
-      description: 'Connect your Facebook Page',
+      description: t('channelDescFacebook'),
       icon: MessageCircle,
       color: 'bg-blue-600',
     },
     {
       id: 'api',
       name: t('api') || 'REST API',
-      description: 'Build custom integrations',
+      description: t('channelDescApi'),
       icon: Code,
       color: 'bg-purple-500',
     },
     {
       id: 'whatsapp',
       name: t('WhatsApp') || 'WhatsApp',
-      description: 'Connect your WhatsApp Business Account',
+      description: t('channelDescWhatsapp'),
       icon: MessageCircle,
       color: 'bg-green-600',
     },
@@ -88,7 +88,7 @@ export default function Channels() {
                     <p className="text-sm text-gray-500 mt-1">{channel.description}</p>
                     {channel.id === 'web' && (
                       <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-500 mb-2">Embed Code:</p>
+                        <p className="text-xs text-gray-500 mb-2">{t('embedCode')}:</p>
                         <code className="text-xs bg-gray-800 text-gray-100 p-2 rounded block overflow-x-auto">
                           {`<script src="https://your-domain.com/widget.js" data-key="YOUR_API_KEY"></script>`}
                         </code>
