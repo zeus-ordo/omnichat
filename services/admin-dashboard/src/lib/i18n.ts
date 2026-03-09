@@ -372,9 +372,6 @@ export const translations = {
     createNew: 'Crear nuevo',
   }
 };
-  'ja': {},
-  'es': {},
-};
 
 export type Language = keyof typeof translations;
 export type TranslationKey = keyof typeof translations['zh-TW'];
