@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS tenants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
-    schema_name VARCHAR(63) NOT NULL UNIQUE, -- PostgreSQL schema name limit
+    schema_name VARCHAR(63) NOT NULL UNIQUE,
     plan VARCHAR(50) NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'enterprise')),
     status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'deleted')),
     settings JSONB DEFAULT '{}',
@@ -58,211 +58,6 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_tenants_updated_at BEFORE UPDATE ON tenants
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Create a function to create tenant schema
-CREATE OR REPLACE FUNCTION create_tenant_schema(tenant_schema VARCHAR(63))
-RETURNS VOID AS $$
-BEGIN
-    EXECUTE format('CREATE SCHEMA IF NOT EXISTS %I', tenant_schema);
-    
-    -- Create tables in tenant schema
-    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.users (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            email VARCHAR(255) NOT NULL UNIQUE,
-            password_hash VARCHAR(255) NOT NULL,
-            name VARCHAR(255),
-            role VARCHAR(50) NOT NULL DEFAULT ''agent'' CHECK (role IN (''owner'', ''admin'', ''agent'', ''viewer'')),
-            is_active BOOLEAN DEFAULT true,
-            last_login_at TIMESTAMP WITH TIME ZONE,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        )', tenant_schema);
-    
-    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.conversations (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            channel VARCHAR(50) NOT NULL DEFAULT ''web'' CHECK (channel IN (''web'', ''line'', ''facebook'', ''api'')),
-            channel_user_id VARCHAR(255),
-            status VARCHAR(50) NOT NULL DEFAULT ''active'' CHECK (status IN (''active'', ''closed'', ''archived'')),
-            assigned_agent_id UUID,
-            metadata JSONB DEFAULT ''{}'',
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        )', tenant_schema);
-    
-    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.messages (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            conversation_id UUID NOT NULL,
-            role VARCHAR(20) NOT NULL CHECK (role IN (''user'', ''assistant'', ''system'')),
-            content TEXT NOT NULL,
-            metadata JSONB DEFAULT ''{}'',
-            tokens_used INTEGER DEFAULT 0,
-            model_used VARCHAR(100),
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        )', tenant_schema);
-    
-    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.documents (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            name VARCHAR(255) NOT NULL,
-            type VARCHAR(50) NOT NULL CHECK (type IN (''pdf'', ''word'', ''txt'', ''url'', ''html'')),
-            status VARCHAR(50) NOT NULL DEFAULT ''pending'' CHECK (status IN (''pending'', ''processing'', ''ready'', ''error'')),
-            file_url TEXT,
-            content_text TEXT,
-            error_message TEXT,
-            uploaded_by UUID,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        )', tenant_schema);
-    
-    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.flows (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            name VARCHAR(255) NOT NULL,
-            description TEXT,
-            nodes JSONB DEFAULT ''[]'',
-            edges JSONB DEFAULT ''[]'',
-            is_active BOOLEAN DEFAULT false,
-            created_by UUID,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        )', tenant_schema);
-    
-    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.flow_logs (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            conversation_id UUID NOT NULL,
-            flow_id UUID NOT NULL,
-            node_id VARCHAR(100) NOT NULL,
-            node_type VARCHAR(50),
-            input_data JSONB DEFAULT ''{}'',
-            output_data JSONB DEFAULT ''{}'',
-            executed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        )', tenant_schema);
-    
-    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.surveys (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            title VARCHAR(255) NOT NULL,
-            description TEXT,
-            questions JSONB DEFAULT ''[]'',
-            trigger_keywords TEXT[] DEFAULT ''{}'',
-            is_active BOOLEAN DEFAULT true,
-            created_by UUID,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        )', tenant_schema);
-
-    HM|    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.survey_responses (
-YB|            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-NT|            conversation_id UUID NOT NULL,
-MH|            survey_id UUID NOT NULL,
-RZ|            answers JSONB DEFAULT '{}',
-ZR|            submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-JP|        )', tenant_schema);
-TT|
-    -- Message Templates table
-    HM|    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.message_templates (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            name VARCHAR(255) NOT NULL,
-            content TEXT NOT NULL,
-            type VARCHAR(50) NOT NULL DEFAULT 'text' CHECK (type IN ('text', 'button', 'image', 'carousel')),
-            trigger_keyword VARCHAR(100),
-            is_active BOOLEAN DEFAULT true,
-            created_by UUID,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        )', tenant_schema);
-    
-    -- Tickets table
-    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.tickets (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            conversation_id UUID,
-            subject VARCHAR(255) NOT NULL,
-            description TEXT,
-            status VARCHAR(50) NOT NULL DEFAULT ''open'' CHECK (status IN (''open'', ''in_progress'', ''resolved'', ''closed'')),
-            priority VARCHAR(20) NOT NULL DEFAULT ''medium'' CHECK (priority IN (''high'', ''medium'', ''low'')),
-            assigned_agent_id UUID,
-            created_by UUID,
-            resolved_at TIMESTAMP WITH TIME ZONE,
-            closed_at TIMESTAMP WITH TIME ZONE,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        )', tenant_schema);
-    
-    -- Broadcasts table
-    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.broadcasts (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            subject VARCHAR(255) NOT NULL,
-            content TEXT NOT NULL,
-            channel VARCHAR(50) NOT NULL DEFAULT ''all'' CHECK (channel IN (''all'', ''web'', ''line'', ''facebook'', ''api'')),
-            status VARCHAR(50) NOT NULL DEFAULT ''draft'' CHECK (status IN (''draft'', ''scheduled'', ''sent'', ''cancelled'')),
-            scheduled_at TIMESTAMP WITH TIME ZONE,
-            sent_at TIMESTAMP WITH TIME ZONE,
-            recipient_count INTEGER DEFAULT 0,
-            created_by UUID,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        )', tenant_schema);
-        CREATE TABLE IF NOT EXISTS %I.survey_responses (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            conversation_id UUID NOT NULL,
-            survey_id UUID NOT NULL,
-            answers JSONB DEFAULT ''{}'',
-            submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        )', tenant_schema);
-    
-    -- Create indexes
-    EXECUTE format('CREATE INDEX IF NOT EXISTS %I_conversations_tenant ON %I.conversations(created_at)', tenant_schema, tenant_schema);
-    EXECUTE format('CREATE INDEX IF NOT EXISTS %I_messages_conversation ON %I.messages(conversation_id)', tenant_schema, tenant_schema);
-    EXECUTE format('CREATE INDEX IF NOT EXISTS %I_documents_status ON %I.documents(status)', tenant_schema, tenant_schema);
-    EXECUTE format('CREATE INDEX IF NOT EXISTS %I_surveys_active ON %I.surveys(is_active)', tenant_schema, tenant_schema);
-    EXECUTE format('CREATE INDEX IF NOT EXISTS %I_tickets_status ON %I.tickets(status)', tenant_schema, tenant_schema);
-    EXECUTE format('CREATE INDEX IF NOT EXISTS %I_tickets_assigned ON %I.tickets(assigned_agent_id)', tenant_schema, tenant_schema);
-    EXECUTE format('CREATE INDEX IF NOT EXISTS %I_broadcasts_status ON %I.broadcasts(status)', tenant_schema, tenant_schema);
-    
-    -- Create updated_at trigger
-    EXECUTE format('
-        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.users
-        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
-    
-    EXECUTE format('
-        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.conversations
-        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
-    
-    EXECUTE format('
-        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.documents
-        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
-    
-    EXECUTE format('
-        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.flows
-        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
-
-    HM|    EXECUTE format('
-        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.surveys
-KT|        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
-ZP|
-HM|    EXECUTE format('
-        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.message_templates
-    EXECUTE format('
-        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.message_templates
-        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
-    
-    EXECUTE format('
-        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.tickets
-        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
-        CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I.surveys
-        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', tenant_schema, tenant_schema);
-    
-    RAISE NOTICE 'Tenant schema % created successfully', tenant_schema;
-END;
-$$ LANGUAGE plpgsql;
-
 -- Insert default tenant for testing
 INSERT INTO tenants (id, name, schema_name, plan, status, settings)
 VALUES 
@@ -271,7 +66,173 @@ VALUES
 ON CONFLICT (schema_name) DO NOTHING;
 
 -- Create demo tenant schema
-SELECT create_tenant_schema('tenant_demo');
+CREATE SCHEMA IF NOT EXISTS tenant_demo;
+
+-- Create tables in tenant_demo schema
+CREATE TABLE IF NOT EXISTS tenant_demo.users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    role VARCHAR(50) NOT NULL DEFAULT 'agent' CHECK (role IN ('owner', 'admin', 'agent', 'viewer')),
+    is_active BOOLEAN DEFAULT true,
+    last_login_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tenant_demo.conversations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    channel VARCHAR(50) NOT NULL DEFAULT 'web' CHECK (channel IN ('web', 'line', 'facebook', 'api')),
+    channel_user_id VARCHAR(255),
+    status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'closed', 'archived')),
+    assigned_agent_id UUID,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tenant_demo.messages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    conversation_id UUID NOT NULL,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+    content TEXT NOT NULL,
+    metadata JSONB DEFAULT '{}',
+    tokens_used INTEGER DEFAULT 0,
+    model_used VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tenant_demo.documents (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('pdf', 'word', 'txt', 'url', 'html')),
+    status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'ready', 'error')),
+    file_url TEXT,
+    content_text TEXT,
+    error_message TEXT,
+    uploaded_by UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tenant_demo.flows (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    nodes JSONB DEFAULT '[]',
+    edges JSONB DEFAULT '[]',
+    is_active BOOLEAN DEFAULT false,
+    created_by UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tenant_demo.flow_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    conversation_id UUID NOT NULL,
+    flow_id UUID NOT NULL,
+    node_id VARCHAR(100) NOT NULL,
+    node_type VARCHAR(50),
+    input_data JSONB DEFAULT '{}',
+    output_data JSONB DEFAULT '{}',
+    executed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tenant_demo.surveys (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    questions JSONB DEFAULT '[]',
+    trigger_keywords TEXT[] DEFAULT '{}',
+    is_active BOOLEAN DEFAULT true,
+    created_by UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tenant_demo.survey_responses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    conversation_id UUID NOT NULL,
+    survey_id UUID NOT NULL,
+    answers JSONB DEFAULT '{}',
+    submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tenant_demo.message_templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    type VARCHAR(50) NOT NULL DEFAULT 'text' CHECK (type IN ('text', 'button', 'image', 'carousel')),
+    trigger_keyword VARCHAR(100),
+    is_active BOOLEAN DEFAULT true,
+    created_by UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tenant_demo.tickets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    conversation_id UUID,
+    subject VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
+    priority VARCHAR(20) NOT NULL DEFAULT 'medium' CHECK (priority IN ('high', 'medium', 'low')),
+    assigned_agent_id UUID,
+    created_by UUID,
+    resolved_at TIMESTAMP WITH TIME ZONE,
+    closed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tenant_demo.broadcasts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    subject VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    channel VARCHAR(50) NOT NULL DEFAULT 'all' CHECK (channel IN ('all', 'web', 'line', 'facebook', 'api')),
+    status VARCHAR(50) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'scheduled', 'sent', 'cancelled')),
+    scheduled_at TIMESTAMP WITH TIME ZONE,
+    sent_at TIMESTAMP WITH TIME ZONE,
+    recipient_count INTEGER DEFAULT 0,
+    created_by UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for tenant_demo
+CREATE INDEX IF NOT EXISTS tenant_demo_conversations_created ON tenant_demo.conversations(created_at);
+CREATE INDEX IF NOT EXISTS tenant_demo_messages_conversation ON tenant_demo.messages(conversation_id);
+CREATE INDEX IF NOT EXISTS tenant_demo_documents_status ON tenant_demo.documents(status);
+CREATE INDEX IF NOT EXISTS tenant_demo_surveys_active ON tenant_demo.surveys(is_active);
+CREATE INDEX IF NOT EXISTS tenant_demo_tickets_status ON tenant_demo.tickets(status);
+CREATE INDEX IF NOT EXISTS tenant_demo_tickets_assigned ON tenant_demo.tickets(assigned_agent_id);
+CREATE INDEX IF NOT EXISTS tenant_demo_broadcasts_status ON tenant_demo.broadcasts(status);
+
+-- Create triggers for tenant_demo
+CREATE TRIGGER update_tenant_demo_users_updated_at BEFORE UPDATE ON tenant_demo.users
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_tenant_demo_conversations_updated_at BEFORE UPDATE ON tenant_demo.conversations
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_tenant_demo_documents_updated_at BEFORE UPDATE ON tenant_demo.documents
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_tenant_demo_flows_updated_at BEFORE UPDATE ON tenant_demo.flows
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_tenant_demo_surveys_updated_at BEFORE UPDATE ON tenant_demo.surveys
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_tenant_demo_message_templates_updated_at BEFORE UPDATE ON tenant_demo.message_templates
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_tenant_demo_tickets_updated_at BEFORE UPDATE ON tenant_demo.tickets
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_tenant_demo_broadcasts_updated_at BEFORE UPDATE ON tenant_demo.broadcasts
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Create admin user for demo tenant (password: admin123)
 INSERT INTO tenant_demo.users (id, email, password_hash, name, role)
