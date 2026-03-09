@@ -35,7 +35,7 @@ COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy source
-COPY --chown=appuser:appuser . .
+COPY --from=builder /app /app
 
 # Create non-root user
 RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
