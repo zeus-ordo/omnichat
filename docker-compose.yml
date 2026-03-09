@@ -10,7 +10,6 @@ services:
       POSTGRES_DB: omnibot
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U omnibot"]
@@ -117,11 +116,6 @@ services:
       VITE_API_URL: http://57.180.64.19:8080/api
       VITE_WS_URL: ws://57.180.64.19:8080/api
     healthcheck:
-      VITE_API_URL: http://57.180.64.19:8080/api
-      VITE_WS_URL: ws://57.180.64.19:8080/api
-      VITE_API_URL: http://localhost:8080/api
-      VITE_WS_URL: ws://localhost:8080/api
-    healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:80"]
       interval: 30s
       timeout: 10s
@@ -138,7 +132,7 @@ services:
       context: ./services/chat-widget
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://localhost:8080/api
+        VITE_API_URL: http://57.180.64.19:8080/api
     container_name: omnibot-widget
     ports:
       - "5174:80"
