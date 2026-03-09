@@ -330,7 +330,7 @@ export default function Surveys() {
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="input-field"
-                    placeholder="e.g., Customer Feedback Survey"
+                    placeholder={t('surveyTitlePlaceholder')}
                   />
                 </div>
 
@@ -343,7 +343,7 @@ export default function Surveys() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="input-field"
                     rows={2}
-                    placeholder="Optional description for the survey"
+                    placeholder={t('surveyDescriptionPlaceholder')}
                   />
                 </div>
 
@@ -357,7 +357,7 @@ export default function Surveys() {
                     value={formData.trigger_keywords}
                     onChange={(e) => setFormData({ ...formData, trigger_keywords: e.target.value })}
                     className="input-field"
-                    placeholder="thanks, bye, goodbye, done (comma separated)"
+                    placeholder={t('triggerKeywordsPlaceholder')}
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     {t('surveyWillBeSentWhen')}
@@ -408,7 +408,7 @@ export default function Surveys() {
                             value={question.question}
                             onChange={(e) => updateQuestion(question.id, { question: e.target.value })}
                             className="input-field"
-                            placeholder="Enter your question"
+                            placeholder={t('questionPlaceholder')}
                           />
                           
                           <div className="flex items-center gap-3">

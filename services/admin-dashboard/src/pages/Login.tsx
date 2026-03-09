@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/auth'
 import { Sparkles } from 'lucide-react'
+import { useLanguageStore } from '../store/language'
 
 export default function Login() {
   const [email, setEmail] = useState('admin@demo.com')
@@ -9,6 +10,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuthStore()
+  const { t } = useLanguageStore()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,7 +22,7 @@ export default function Login() {
       await login(email, password)
       navigate('/')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed')
+      setError(err.response?.data?.message || t('signIn'))
     } finally {
       setLoading(false)
     }
@@ -34,7 +36,7 @@ export default function Login() {
             <Sparkles className="text-white" size={32} />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">OmniChat</h1>
-          <p className="text-gray-500 mt-2">Sign in to your account</p>
+          <p className="text-gray-500 mt-2">{t('signInToYourAccount')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -46,7 +48,7 @@ export default function Login() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              {t('email')}
             </label>
             <input
               type="email"
@@ -59,7 +61,7 @@ export default function Login() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
+              {t('password')}
             </label>
             <input
               type="password"
@@ -75,12 +77,12 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? t('signingIn') : t('signIn')}
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-500">
-          Default: admin@demo.com / admin123
+          {t('defaultCredentials')}
         </div>
       </div>
     </div>

@@ -93,7 +93,7 @@ export default function Tickets() {
           className="btn-primary flex items-center gap-2"
         >
           <Plus size={20} />
-          {t('create_ticket') || 'Create Ticket'}
+          {t('createTicket')}
         </button>
       </div>
 
@@ -104,11 +104,11 @@ export default function Tickets() {
           onChange={(e) => setStatusFilter(e.target.value)}
           className="input-field"
         >
-          <option value="">All Status</option>
-          <option value="open">Open</option>
-          <option value="in_progress">In Progress</option>
-          <option value="resolved">Resolved</option>
-          <option value="closed">Closed</option>
+          <option value="">{t('allStatus')}</option>
+          <option value="open">{t('open')}</option>
+          <option value="in_progress">{t('inProgress')}</option>
+          <option value="resolved">{t('resolved')}</option>
+          <option value="closed">{t('closed')}</option>
         </select>
 
         <select
@@ -116,18 +116,18 @@ export default function Tickets() {
           onChange={(e) => setPriorityFilter(e.target.value)}
           className="input-field"
         >
-          <option value="">All Priority</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
+          <option value="">{t('allPriority')}</option>
+          <option value="high">{t('high')}</option>
+          <option value="medium">{t('medium')}</option>
+          <option value="low">{t('low')}</option>
         </select>
       </div>
 
       {/* Tickets List */}
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Loading...</div>
+        <div className="text-center py-8 text-gray-500">{t('loading')}</div>
       ) : tickets.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">No tickets found</div>
+        <div className="text-center py-8 text-gray-500">{t('noTicketsFound')}</div>
       ) : (
         <div className="space-y-4">
           {tickets.map((ticket) => (
@@ -142,9 +142,9 @@ export default function Tickets() {
                     <h3 className="font-semibold text-lg">{ticket.subject}</h3>
                     <p className="text-gray-600 text-sm mt-1">{ticket.description}</p>
                     <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                      <span>Created: {new Date(ticket.created_at).toLocaleDateString()}</span>
+                      <span>{t('createdLabel')}: {new Date(ticket.created_at).toLocaleDateString()}</span>
                       {ticket.resolved_at && (
-                        <span>Resolved: {new Date(ticket.resolved_at).toLocaleDateString()}</span>
+                        <span>{t('resolvedLabel')}: {new Date(ticket.resolved_at).toLocaleDateString()}</span>
                       )}
                     </div>
                   </div>
@@ -164,7 +164,7 @@ export default function Tickets() {
                     onClick={() => updateTicketStatus(ticket.id, 'in_progress')}
                     className="text-sm text-blue-600 hover:text-blue-800"
                   >
-                    Start Working
+                    {t('startWorking')}
                   </button>
                 )}
                 {ticket.status === 'in_progress' && (
@@ -172,7 +172,7 @@ export default function Tickets() {
                     onClick={() => updateTicketStatus(ticket.id, 'resolved')}
                     className="text-sm text-green-600 hover:text-green-800"
                   >
-                    Mark Resolved
+                    {t('markResolved')}
                   </button>
                 )}
                 {ticket.status === 'resolved' && (
@@ -180,7 +180,7 @@ export default function Tickets() {
                     onClick={() => updateTicketStatus(ticket.id, 'closed')}
                     className="text-sm text-gray-600 hover:text-gray-800"
                   >
-                    Close Ticket
+                    {t('closeTicket')}
                   </button>
                 )}
               </div>
@@ -193,10 +193,10 @@ export default function Tickets() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">{t('create_ticket') || 'Create New Ticket'}</h2>
+            <h2 className="text-xl font-bold mb-4">{t('createNewTicket')}</h2>
             <form onSubmit={createTicket}>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Subject</label>
+                <label className="block text-sm font-medium mb-1">{t('subject')}</label>
                 <input
                   type="text"
                   value={subject}
@@ -206,7 +206,7 @@ export default function Tickets() {
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Description</label>
+                <label className="block text-sm font-medium mb-1">{t('description')}</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -215,15 +215,15 @@ export default function Tickets() {
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Priority</label>
+                <label className="block text-sm font-medium mb-1">{t('priority')}</label>
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
                   className="input-field w-full"
                 >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
+                  <option value="low">{t('low')}</option>
+                  <option value="medium">{t('medium')}</option>
+                  <option value="high">{t('high')}</option>
                 </select>
               </div>
               <div className="flex gap-2 justify-end">
@@ -232,10 +232,10 @@ export default function Tickets() {
                   onClick={() => setShowModal(false)}
                   className="btn-secondary"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button type="submit" className="btn-primary">
-                  Create
+                  {t('create')}
                 </button>
               </div>
             </form>

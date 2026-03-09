@@ -72,7 +72,7 @@ export default function ApiKeys() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">API Keys</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t('apiKeys')}</h1>
           <p className="text-gray-500 mt-1">{t('manageApiKeys') || '管理 API 金鑰用於第三方整合'}</p>
         </div>
         <button
@@ -121,7 +121,7 @@ export default function ApiKeys() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('name') || '名稱'}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">API Key</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('apiKeyColumn')}</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('lastUsed') || '最後使用'}</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('expiresAt') || '過期時間'}</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('createdAt') || '建立時間'}</th>
@@ -186,7 +186,7 @@ export default function ApiKeys() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="例如：Production API"
+                  placeholder={t('apiKeyNamePlaceholder')}
                   className="input-field"
                   required
                 />

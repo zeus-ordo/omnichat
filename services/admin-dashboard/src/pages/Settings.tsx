@@ -79,7 +79,7 @@ export default function Settings() {
               <textarea
                 rows={4}
                 className="input-field"
-                defaultValue="You are a helpful AI assistant for customer support. Provide accurate, friendly, and concise responses."
+                defaultValue={t('defaultSystemPrompt')}
               />
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function Settings() {
           <div className="space-y-3">
             <input
               type="url"
-              placeholder="Webhook URL (e.g., https://your-server.com/webhook)"
+              placeholder={t('webhookUrlPlaceholder')}
               className="input-field"
             />
             <div className="flex gap-2">

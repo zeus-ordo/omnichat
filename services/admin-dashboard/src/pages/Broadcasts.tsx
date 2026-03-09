@@ -74,7 +74,7 @@ export default function Broadcasts() {
   }
 
   const deleteBroadcast = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this broadcast?')) return
+    if (!confirm(t('confirmDeleteBroadcast'))) return
     try {
       await api.delete(`/broadcasts/${id}`)
       loadBroadcasts()
@@ -117,11 +117,11 @@ export default function Broadcasts() {
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-lg"
         >
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="sent">Sent</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="">{t('allStatus')}</option>
+          <option value="draft">{t('draft')}</option>
+          <option value="scheduled">{t('scheduled')}</option>
+          <option value="sent">{t('sent')}</option>
+          <option value="cancelled">{t('cancelled')}</option>
         </select>
       </div>
 
@@ -134,7 +134,7 @@ export default function Broadcasts() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('status')}</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('subject') || 'Subject'}</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('channel') || 'Channel'}</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('recipients') || 'Recipients'}</th>
@@ -151,7 +151,7 @@ export default function Broadcasts() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm font-medium">{broadcast.subject}</td>
-                  <td className="px-6 py-4 text-sm">{broadcast.channel || 'All'}</td>
+                  <td className="px-6 py-4 text-sm">{broadcast.channel || t('allChannels')}</td>
                   <td className="px-6 py-4 text-sm">{broadcast.recipients_count || 0}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
@@ -159,7 +159,7 @@ export default function Broadcasts() {
                         <button
                           onClick={() => sendBroadcast(broadcast.id)}
                           className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                          title="Send"
+                          title={t('send')}
                         >
                           <Send size={16} />
                         </button>
@@ -168,7 +168,7 @@ export default function Broadcasts() {
                         <button
                           onClick={() => cancelBroadcast(broadcast.id)}
                           className="p-1 text-orange-600 hover:bg-orange-50 rounded"
-                          title="Cancel"
+                          title={t('cancel')}
                         >
                           <XCircle size={16} />
                         </button>
@@ -176,7 +176,7 @@ export default function Broadcasts() {
                       <button
                         onClick={() => deleteBroadcast(broadcast.id)}
                         className="p-1 text-red-600 hover:bg-red-50 rounded"
-                        title="Delete"
+                        title={t('deleteLabel')}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -222,8 +222,8 @@ export default function Broadcasts() {
                     onChange={(e) => setChannel(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   >
-                    <option value="all">All Channels</option>
-                    <option value="web">Website</option>
+                    <option value="all">{t('allChannels')}</option>
+                    <option value="web">{t('website')}</option>
                     <option value="line">LINE</option>
                     <option value="facebook">Facebook</option>
                     <option value="whatsapp">WhatsApp</option>

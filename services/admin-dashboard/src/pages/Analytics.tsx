@@ -80,7 +80,7 @@ export default function Analytics() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading analytics...</div>
+        <div className="text-gray-500">{t('loadingAnalytics')}</div>
       </div>
     )
   }
@@ -106,9 +106,9 @@ export default function Analytics() {
           onChange={(e) => setDays(Number(e.target.value))}
           className="input-field"
         >
-          <option value={7}>Last 7 days</option>
-          <option value={30}>Last 30 days</option>
-          <option value={90}>Last 90 days</option>
+          <option value={7}>{t('last7Days')}</option>
+          <option value={30}>{t('last30Days')}</option>
+          <option value={90}>{t('last90Days')}</option>
         </select>
       </div>
 
@@ -117,7 +117,7 @@ export default function Analytics() {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Conversations</p>
+              <p className="text-sm text-gray-500">{t('totalConversations')}</p>
               <p className="text-2xl font-bold">{formatNumber(data?.overview.total_conversations || 0)}</p>
             </div>
             <MessageSquare className="w-8 h-8 text-blue-500" />
@@ -127,7 +127,7 @@ export default function Analytics() {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Active Conversations</p>
+              <p className="text-sm text-gray-500">{t('activeConversations')}</p>
               <p className="text-2xl font-bold">{formatNumber(data?.overview.active_conversations || 0)}</p>
             </div>
             <Activity className="w-8 h-8 text-green-500" />
@@ -137,7 +137,7 @@ export default function Analytics() {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Messages</p>
+              <p className="text-sm text-gray-500">{t('totalMessages')}</p>
               <p className="text-2xl font-bold">{formatNumber(data?.overview.total_messages || 0)}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-purple-500" />
@@ -147,7 +147,7 @@ export default function Analytics() {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">AI Tokens Used</p>
+              <p className="text-sm text-gray-500">{t('aiTokensUsed')}</p>
               <p className="text-2xl font-bold">{formatNumber(data?.overview.total_tokens || 0)}</p>
             </div>
             <Zap className="w-8 h-8 text-yellow-500" />
@@ -157,27 +157,27 @@ export default function Analytics() {
 
       {/* Conversation Metrics */}
       <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h2 className="text-lg font-semibold mb-4">Conversation Metrics</h2>
+        <h2 className="text-lg font-semibold mb-4">{t('conversationMetrics')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-blue-600">{data?.conversationMetrics?.total || 0}</p>
-            <p className="text-sm text-gray-500">Total</p>
+            <p className="text-sm text-gray-500">{t('totalLabel')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-green-600">{data?.conversationMetrics?.active || 0}</p>
-            <p className="text-sm text-gray-500">Active</p>
+            <p className="text-sm text-gray-500">{t('activeLabel')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-600">{data?.conversationMetrics?.closed || 0}</p>
-            <p className="text-sm text-gray-500">Closed</p>
+            <p className="text-sm text-gray-500">{t('closedLabel')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-purple-600">{data?.conversationMetrics?.assigned || 0}</p>
-            <p className="text-sm text-gray-500">Assigned</p>
+            <p className="text-sm text-gray-500">{t('assignedLabel')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-orange-600">{data?.conversationMetrics?.unassigned || 0}</p>
-            <p className="text-sm text-gray-500">Unassigned</p>
+            <p className="text-sm text-gray-500">{t('unassignedLabel')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-cyan-600">
@@ -185,7 +185,7 @@ export default function Analytics() {
                 ? ((data?.conversationMetrics?.closed / data?.conversationMetrics?.total) * 100).toFixed(0)
                 : 0}%
             </p>
-            <p className="text-sm text-gray-500">Resolution Rate</p>
+            <p className="text-sm text-gray-500">{t('resolutionRate')}</p>
           </div>
         </div>
       </div>
@@ -196,23 +196,23 @@ export default function Analytics() {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            Response Time
+            {t('responseTimeLabel')}
           </h2>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">Average</span>
+              <span className="text-gray-500">{t('average')}</span>
               <span className="font-semibold">{formatResponseTime(data?.responseTime?.avg_response_time)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">Median</span>
+              <span className="text-gray-500">{t('median')}</span>
               <span className="font-semibold">{formatResponseTime(data?.responseTime?.median_response_time)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">Min</span>
+              <span className="text-gray-500">{t('min')}</span>
               <span className="font-semibold">{formatResponseTime(data?.responseTime?.min_response_time)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">Max</span>
+              <span className="text-gray-500">{t('max')}</span>
               <span className="font-semibold">{formatResponseTime(data?.responseTime?.max_response_time)}</span>
             </div>
           </div>
@@ -222,26 +222,26 @@ export default function Analytics() {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Zap className="w-5 h-5" />
-            AI Model Performance
+            {t('aiModelPerformance')}
           </h2>
           <div className="space-y-3">
             {data?.aiPerformance?.map((model: any, idx: number) => (
               <div key={idx} className="p-3 bg-gray-50 rounded-lg">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium">{model.model_used}</span>
-                  <span className="text-sm text-gray-500">{model.total_responses} responses</span>
+                  <span className="text-sm text-gray-500">{model.total_responses} {t('responses')}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div>
-                    <p className="text-gray-500">Total Tokens</p>
+                    <p className="text-gray-500">{t('aiTokensUsed')}</p>
                     <p className="font-semibold">{formatNumber(model.total_tokens)}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Avg/Response</p>
+                    <p className="text-gray-500">{t('avgPerResponse')}</p>
                     <p className="font-semibold">{model.avg_tokens}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Conversations</p>
+                    <p className="text-gray-500">{t('conversations')}</p>
                     <p className="font-semibold">{model.unique_conversations}</p>
                   </div>
                 </div>
@@ -255,17 +255,17 @@ export default function Analytics() {
       <div className="bg-white p-6 rounded-lg border border-gray-200">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <PieChart className="w-5 h-5" />
-          Channel Comparison
+          {t('channelComparison')}
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-2">Channel</th>
-                <th className="text-right py-2">Conversations</th>
-                <th className="text-right py-2">Messages</th>
-                <th className="text-right py-2">Avg Tokens</th>
-                <th className="text-right py-2">Agents</th>
+                <th className="text-left py-2">{t('channel')}</th>
+                <th className="text-right py-2">{t('conversations')}</th>
+                <th className="text-right py-2">{t('totalMessages')}</th>
+                <th className="text-right py-2">{t('avgTokens')}</th>
+                <th className="text-right py-2">{t('agents')}</th>
               </tr>
             </thead>
             <tbody>
@@ -287,17 +287,17 @@ export default function Analytics() {
       <div className="bg-white p-6 rounded-lg border border-gray-200">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Users className="w-5 h-5" />
-          Agent Performance
+          {t('agentPerformance')}
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-2">Agent</th>
-                <th className="text-right py-2">Assigned</th>
-                <th className="text-right py-2">Resolved</th>
-                <th className="text-right py-2">Rate</th>
-                <th className="text-right py-2">Last Activity</th>
+                <th className="text-left py-2">{t('agent')}</th>
+                <th className="text-right py-2">{t('assignedLabel')}</th>
+                <th className="text-right py-2">{t('resolved')}</th>
+                <th className="text-right py-2">{t('rate')}</th>
+                <th className="text-right py-2">{t('lastActivity')}</th>
               </tr>
             </thead>
             <tbody>
@@ -305,7 +305,7 @@ export default function Analytics() {
                 <tr key={idx} className="border-b">
                   <td className="py-2">
                     <div>
-                      <p className="font-medium">{agent.name || 'Unknown'}</p>
+                      <p className="font-medium">{agent.name || t('unknown')}</p>
                       <p className="text-sm text-gray-500">{agent.email}</p>
                     </div>
                   </td>
@@ -313,7 +313,7 @@ export default function Analytics() {
                   <td className="text-right">{agent.resolved_conversations}</td>
                   <td className="text-right">{agent.resolution_rate || 0}%</td>
                   <td className="text-right text-sm text-gray-500">
-                    {agent.last_activity ? new Date(agent.last_activity).toLocaleDateString() : 'N/A'}
+                    {agent.last_activity ? new Date(agent.last_activity).toLocaleDateString() : t('na')}
                   </td>
                 </tr>
               ))}
@@ -326,7 +326,7 @@ export default function Analytics() {
       <div className="bg-white p-6 rounded-lg border border-gray-200">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Hash className="w-5 h-5" />
-          Popular Topics
+          {t('popularTopics')}
         </h2>
         <div className="flex flex-wrap gap-2">
           {data?.popularTopics?.map((topic: any, idx: number) => (

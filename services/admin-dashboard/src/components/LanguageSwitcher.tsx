@@ -11,7 +11,7 @@ const languages: { code: Language; name: string; flag: string }[] = [
 ]
 
 export default function LanguageSwitcher() {
-  const { language, setLanguage } = useLanguageStore()
+  const { language, setLanguage, t } = useLanguageStore()
   const [isOpen, setIsOpen] = useState(false)
   const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -54,7 +54,7 @@ export default function LanguageSwitcher() {
         ref={buttonRef}
         onClick={toggleDropdown}
         className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors w-full justify-start"
-        title="Switch Language"
+        title={t('switchLanguage')}
       >
         <Globe size={16} />
         <span className="text-xs">{currentLang.flag}</span>
