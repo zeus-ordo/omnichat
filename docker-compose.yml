@@ -111,6 +111,13 @@ services:
     build:
       context: ./services/admin-dashboard
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://57.180.64.19:8080/api
+    container_name: omnibot-admin
+    healthcheck:
+    build:
+      context: ./services/admin-dashboard
+      dockerfile: Dockerfile
     container_name: omnibot-admin
     environment:
       VITE_API_URL: http://57.180.64.19:8080/api
