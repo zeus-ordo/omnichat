@@ -7,13 +7,17 @@ import {
 import { Request, Response, NextFunction } from 'express';
 import { DataSource } from 'typeorm';
 import * as crypto from 'crypto';
+import { JwtService } from '@nestjs/jwt';
 
 // 白名單：允許的 schema 字元 (只允許字母、數字、底線)
 const VALID_SCHEMA_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 @Injectable()
 export class TenantMiddleware implements NestMiddleware {
-  constructor(private dataSource: DataSource) {}
+  constructor(
+    private dataSource: DataSource,
+    private jwtService: JwtService,
+  ) {}
 
   private validateSchemaName(schemaName: string): boolean {
     // 驗證 schema 名稱是否符合安全規範
@@ -34,6 +38,27 @@ export class TenantMiddleware implements NestMiddleware {
       // For auth routes, use default tenant
       (req as any).tenantSchema = 'tenant_demo';
       return next();
+    }
+
+    // Prefer tenant from JWT bearer token
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      try {
+        const payload: any = this.jwtService.verify(token);
+        const tokenSchema = payload?.tenant_schema;
+
+        if (tokenSchema && this.validateSchemaName(tokenSchema)) {
+          (req as any).tenantSchema = tokenSchema;
+          (req as any).tenantId = payload?.tenant_id;
+
+          const safeSchema = this.escapeIdentifier(tokenSchema);
+          await this.dataSource.query(`SET search_path TO ${safeSchema}, public`);
+          return next();
+        }
+      } catch {
+        // Ignore invalid token here, let auth guard handle it later
+      }
     }
 
     // Get API key from header
