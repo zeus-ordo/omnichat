@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { DataSource } from '@typeorm/data-source';
+import { DataSource } from 'typeorm';
 import { BroadcastsService } from './broadcasts.service';
 import { BroadcastsController } from './broadcasts.controller';
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { useLanguageStore } from '../store/language'
-import { Users, Plus, Edit2, Trash2, Shield, Mail, User, X, Check } from 'lucide-react'
+import { Users as UsersIcon, Plus, Edit2, Trash2, Shield, Mail, User, X, Check } from 'lucide-react'
 
 interface User {
   id: string

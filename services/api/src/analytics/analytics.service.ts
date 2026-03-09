@@ -48,15 +48,6 @@ export class AnalyticsService {
     );
   }
 
-  async getDailyStats(tenantSchema: string, days: number = 30) {
-    return this.dataSource.query(
-      `SELECT DATE(created_at) as date, COUNT(*) as conversations
-       FROM ${tenantSchema}.conversations
-       WHERE created_at >= NOW() - INTERVAL '${days} days'
-       GROUP BY DATE(created_at)
-       ORDER BY date`,
-    );
-  }
 
   // Advanced Analytics
   async getHourlyStats(tenantSchema: string, days: number = 7) {

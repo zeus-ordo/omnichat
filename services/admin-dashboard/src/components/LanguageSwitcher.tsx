@@ -33,9 +33,15 @@ export default function LanguageSwitcher() {
   const toggleDropdown = () => {
     if (!isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect()
-      // Show dropdown ABOVE the button
+      const dropdownHeight = 180
+      const spaceAbove = rect.top
+      const spaceBelow = window.innerHeight - rect.bottom
+      
+      // Show dropdown BELOW the button if there's space, otherwise show above
+      const showBelow = spaceBelow >= dropdownHeight || spaceBelow > spaceAbove
+      
       setPosition({
-        top: rect.top - 4,
+        top: showBelow ? rect.bottom + 4 : rect.top - dropdownHeight,
         left: rect.left
       })
     }
@@ -73,7 +79,7 @@ export default function LanguageSwitcher() {
                 setIsOpen(false)
               }}
               className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 ${
-                language === lang.code ? 'bg-primary-50 text-primary-600' : 'text-gray-700'
+                language === lang.code ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
               }`}
             >
               <span>{lang.flag}</span>

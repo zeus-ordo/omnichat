@@ -58,10 +58,6 @@ export class ConversationsService {
       whereClause += ` AND assigned_agent_id = $${paramIndex}`;
       params.push(assigned_agent_id);
       paramIndex++;
-    if (assigned_agent_id) {
-      whereClause += ` AND assigned_agent_id = $${paramIndex}`;
-      params.push(assigned_agent_id);
-      paramIndex++;
     }
 
     // Search by keyword in messages

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
-import { Broadcast, Send, Clock, CheckCircle, XCircle, Trash2, Plus, Users } from 'lucide-react'
+import { Radio, Send, Clock, CheckCircle, XCircle, Trash2, Plus, Users } from 'lucide-react'
 import { useLanguageStore } from '../store/language'
 
 export default function Broadcasts() {
@@ -9,7 +9,6 @@ export default function Broadcasts() {
   const [showModal, setShowModal] = useState(false)
   const [statusFilter, setStatusFilter] = useState('')
   
-  // Form state
   const [subject, setSubject] = useState('')
   const [content, setContent] = useState('')
   const [channel, setChannel] = useState('all')
@@ -20,15 +19,11 @@ export default function Broadcasts() {
 
   useEffect(() => {
     loadBroadcasts()
-  }, [statusFilter])
+  }, [])
 
   const loadBroadcasts = async () => {
-    setLoading(true)
     try {
-      const params = new URLSearchParams()
-      if (statusFilter) params.append('status', statusFilter)
-      
-      const response = await api.get(`/broadcasts?${params.toString()}`)
+      const response = await api.get('/broadcasts')
       setBroadcasts(response.data.data || [])
     } catch (error) {
       console.error('Failed to load broadcasts', error)
@@ -39,6 +34,7 @@ export default function Broadcasts() {
 
   const createBroadcast = async (e: React.FormEvent) => {
     e.preventDefault()
+    setSending(true)
     try {
       await api.post('/broadcasts', {
         subject,
@@ -54,26 +50,21 @@ export default function Broadcasts() {
       loadBroadcasts()
     } catch (error) {
       console.error('Failed to create broadcast', error)
-    }
-  }
-
-  const sendBroadcast = async (id: string) => {
-    if (!confirm('Are you sure you want to send this broadcast now?')) return
-    
-    setSending(true)
-    try {
-      await api.post(`/broadcasts/${id}/send`)
-      loadBroadcasts()
-    } catch (error) {
-      console.error('Failed to send broadcast', error)
     } finally {
       setSending(false)
     }
   }
 
+  const sendBroadcast = async (id: string) => {
+    try {
+      await api.post(`/broadcasts/${id}/send`)
+      loadBroadcasts()
+    } catch (error) {
+      console.error('Failed to send broadcast', error)
+    }
+  }
+
   const cancelBroadcast = async (id: string) => {
-    if (!confirm('Are you sure you want to cancel this broadcast?')) return
-    
     try {
       await api.post(`/broadcasts/${id}/cancel`)
       loadBroadcasts()
@@ -84,7 +75,6 @@ export default function Broadcasts() {
 
   const deleteBroadcast = async (id: string) => {
     if (!confirm('Are you sure you want to delete this broadcast?')) return
-    
     try {
       await api.delete(`/broadcasts/${id}`)
       loadBroadcasts()
@@ -93,30 +83,20 @@ export default function Broadcasts() {
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">Draft</span>
-      case 'scheduled':
-        return <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600">Scheduled</span>
-      case 'sent':
-        return <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-600">Sent</span>
-      case 'cancelled':
-        return <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">Cancelled</span>
-      default:
-        return <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">{status}</span>
-    }
-  }
-
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'draft': return <Broadcast className="w-4 h-4 text-gray-500" />
+      case 'draft': return <Radio className="w-4 h-4 text-gray-500" />
       case 'scheduled': return <Clock className="w-4 h-4 text-blue-500" />
       case 'sent': return <CheckCircle className="w-4 h-4 text-green-500" />
       case 'cancelled': return <XCircle className="w-4 h-4 text-red-500" />
-      default: return <Broadcast className="w-4 h-4" />
+      default: return <Radio className="w-4 h-4" />
     }
   }
+
+  const filteredBroadcasts = broadcasts.filter((b: any) => {
+    if (statusFilter && b.status !== statusFilter) return false
+    return true
+  })
 
   return (
     <div className="p-6">
@@ -124,19 +104,18 @@ export default function Broadcasts() {
         <h1 className="text-2xl font-bold">{t('broadcasts') || 'Broadcasts'}</h1>
         <button
           onClick={() => setShowModal(true)}
-          className="btn-primary flex items-center gap-2"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <Plus size={20} />
-          {t('create_broadcast') || 'Create Broadcast'}
+          {t('createNew') || 'Create Broadcast'}
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-4 mb-6">
+      <div className="mb-4 flex gap-4">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="input-field"
+          className="px-3 py-2 border border-gray-300 rounded-lg"
         >
           <option value="">All Status</option>
           <option value="draft">Draft</option>
@@ -146,135 +125,134 @@ export default function Broadcasts() {
         </select>
       </div>
 
-      {/* Broadcasts List */}
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Loading...</div>
-      ) : broadcasts.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">No broadcasts found</div>
+        <div className="text-center py-8 text-gray-500">{t('loading') || 'Loading...'}</div>
+      ) : filteredBroadcasts.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">{t('noData') || 'No broadcasts found'}</div>
       ) : (
-        <div className="space-y-4">
-          {broadcasts.map((broadcast) => (
-            <div
-              key={broadcast.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  {getStatusIcon(broadcast.status)}
-                  <div>
-                    <h3 className="font-semibold text-lg">{broadcast.subject}</h3>
-                    <p className="text-gray-600 text-sm mt-1 line-clamp-2">{broadcast.content}</p>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                      <span>Channel: {broadcast.channel}</span>
-                      <span>Created: {new Date(broadcast.created_at).toLocaleDateString()}</span>
-                      {broadcast.sent_at && (
-                        <span>Sent: {new Date(broadcast.sent_at).toLocaleDateString()}</span>
-                      )}
-                      {broadcast.recipient_count > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Users size={14} />
-                          {broadcast.recipient_count} recipients
-                        </span>
-                      )}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('subject') || 'Subject'}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('channel') || 'Channel'}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('recipients') || 'Recipients'}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('actions') || 'Actions'}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredBroadcasts.map((broadcast: any) => (
+                <tr key={broadcast.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(broadcast.status)}
+                      <span className="text-sm capitalize">{broadcast.status}</span>
                     </div>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  {getStatusBadge(broadcast.status)}
-                </div>
-              </div>
-
-              {/* Actions */}
-              {(broadcast.status === 'draft' || broadcast.status === 'scheduled') && (
-                <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                  <button
-                    onClick={() => sendBroadcast(broadcast.id)}
-                    disabled={sending}
-                    className="text-sm text-green-600 hover:text-green-800 flex items-center gap-1"
-                  >
-                    <Send size={14} />
-                    Send Now
-                  </button>
-                  {broadcast.status === 'scheduled' && (
-                    <button
-                      onClick={() => cancelBroadcast(broadcast.id)}
-                      className="text-sm text-yellow-600 hover:text-yellow-800"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  <button
-                    onClick={() => deleteBroadcast(broadcast.id)}
-                    className="text-sm text-red-600 hover:text-red-800 flex items-center gap-1"
-                  >
-                    <Trash2 size={14} />
-                    Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+                  </td>
+                  <td className="px-6 py-4 text-sm font-medium">{broadcast.subject}</td>
+                  <td className="px-6 py-4 text-sm">{broadcast.channel || 'All'}</td>
+                  <td className="px-6 py-4 text-sm">{broadcast.recipients_count || 0}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      {broadcast.status === 'draft' && (
+                        <button
+                          onClick={() => sendBroadcast(broadcast.id)}
+                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          title="Send"
+                        >
+                          <Send size={16} />
+                        </button>
+                      )}
+                      {broadcast.status === 'scheduled' && (
+                        <button
+                          onClick={() => cancelBroadcast(broadcast.id)}
+                          className="p-1 text-orange-600 hover:bg-orange-50 rounded"
+                          title="Cancel"
+                        >
+                          <XCircle size={16} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteBroadcast(broadcast.id)}
+                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Create Broadcast Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">{t('create_broadcast') || 'Create New Broadcast'}</h2>
+          <div className="bg-white rounded-xl p-6 w-full max-w-lg">
+            <h2 className="text-xl font-bold mb-4">{t('createNew') || 'Create New Broadcast'}</h2>
             <form onSubmit={createBroadcast}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Subject</label>
-                <input
-                  type="text"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="input-field w-full"
-                  required
-                />
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('subject') || 'Subject'}</label>
+                  <input
+                    type="text"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('description') || 'Content'}</label>
+                  <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('channel') || 'Channel'}</label>
+                  <select
+                    value={channel}
+                    onChange={(e) => setChannel(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="all">All Channels</option>
+                    <option value="web">Website</option>
+                    <option value="line">LINE</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="whatsapp">WhatsApp</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('scheduledAt') || 'Schedule (Optional)'}</label>
+                  <input
+                    type="datetime-local"
+                    value={scheduledAt}
+                    onChange={(e) => setScheduledAt(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
               </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Message Content</label>
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="input-field w-full h-32"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Channel</label>
-                <select
-                  value={channel}
-                  onChange={(e) => setChannel(e.target.value)}
-                  className="input-field w-full"
-                >
-                  <option value="all">All Channels</option>
-                  <option value="web">Web</option>
-                  <option value="line">LINE</option>
-                  <option value="facebook">Facebook</option>
-                  <option value="api">API</option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Schedule (Optional)</label>
-                <input
-                  type="datetime-local"
-                  value={scheduledAt}
-                  onChange={(e) => setScheduledAt(e.target.value)}
-                  className="input-field w-full"
-                />
-              </div>
-              <div className="flex gap-2 justify-end">
+              <div className="flex justify-end gap-3 mt-6">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="btn-secondary"
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
                 >
-                  Cancel
+                  {t('cancel') || 'Cancel'}
                 </button>
-                <button type="submit" className="btn-primary">
-                  Create
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {sending ? (t('sending') || 'Sending...') : (t('save') || 'Create')}
                 </button>
               </div>
             </form>

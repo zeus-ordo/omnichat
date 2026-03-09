@@ -13,12 +13,13 @@ export const useLanguageStore = create<LanguageState>()(
     (set, get) => ({
       language: 'zh-TW',
       
-      setLanguage: (language: Language) => set({ language }),
+      setLanguage: (lang: Language) => set({ language: lang }),
       
       t: (key: string, params?: Record<string, string>): string => {
-        const { language } = get()
-        let text = translations[language]?.[key as keyof typeof translations['en']] 
-          || translations['en'][key as keyof typeof translations['en']] 
+        const currentLang = get().language
+        const langTranslations = translations[currentLang] || translations['en']
+        let text = (langTranslations as any)[key] 
+          || (translations['en'] as any)[key] 
           || key
         
         // Replace parameters like {name} with actual values

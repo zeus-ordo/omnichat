@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { DataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsController } from './analytics.controller';
 

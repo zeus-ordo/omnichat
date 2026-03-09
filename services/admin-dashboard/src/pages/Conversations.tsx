@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { Send, User, Bot } from 'lucide-react'
 import { useLanguageStore } from '../store/language'
@@ -14,10 +14,6 @@ export default function Conversations() {
   const { t } = useLanguageStore()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
-  const [channelFilter, setChannelFilter] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [priorityFilter, setPriorityFilter] = useState('')
 
   useEffect(() => {
     loadConversations()
@@ -29,31 +25,9 @@ export default function Conversations() {
     }
   }, [id])
 
-  useEffect(() => {
-    loadConversations()
-  }, [search, statusFilter, channelFilter, dateFrom, dateTo, priorityFilter])
-
   const loadConversations = async () => {
     try {
       const response = await api.get('/conversations')
-      setConversations(response.data.data || [])
-    } catch (error) {
-      console.error('Failed to load conversations', error)
-    } finally {
-      setLoading(false)
-    }
-  const loadConversations = async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams()
-      if (search) params.append('search', search)
-      if (statusFilter) params.append('status', statusFilter)
-      if (channelFilter) params.append('channel', channelFilter)
-      if (dateFrom) params.append('date_from', dateFrom)
-      if (dateTo) params.append('date_to', dateTo)
-      if (priorityFilter) params.append('priority', priorityFilter)
-      
-      const response = await api.get(`/conversations?${params.toString()}`)
       setConversations(response.data.data || [])
     } catch (error) {
       console.error('Failed to load conversations', error)
@@ -64,22 +38,18 @@ export default function Conversations() {
 
   const loadConversation = async (conversationId: string) => {
     try {
-      const [convResponse, messagesResponse] = await Promise.all([
-        api.get(`/conversations/${conversationId}`),
-        api.get(`/messages/conversation/${conversationId}`)
-      ])
-      setCurrentConversation(convResponse.data)
-      setMessages(messagesResponse.data || [])
+      const response = await api.get(`/conversations/${conversationId}`)
+      setCurrentConversation(response.data)
+      setMessages(response.data.messages || [])
     } catch (error) {
       console.error('Failed to load conversation', error)
     }
   }
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !id) return
-
+    if (!newMessage.trim() || !currentConversation) return
     try {
-      const response = await api.post(`/conversations/${id}/messages`, {
+      const response = await api.post(`/conversations/${currentConversation.id}/messages`, {
         content: newMessage,
       })
       setMessages([...messages, response.data.message])
@@ -89,114 +59,56 @@ export default function Conversations() {
     }
   }
 
+  const filteredConversations = conversations.filter((conv: any) => {
+    if (statusFilter && conv.status !== statusFilter) return false
+    return true
+  })
+
   return (
     <div className="h-[calc(100vh-2rem)] flex">
       {/* Conversations List */}
       <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
         <div className="p-4 border-b border-gray-200">
-          <h1 className="text-xl font-bold">Conversations</h1>
-        <div className="p-4 border-b border-gray-200 space-y-3">
           <h1 className="text-xl font-bold">{t('conversations') || 'Conversations'}</h1>
-          
-          {/* Search */}
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search messages..."
-            className="input-field w-full"
+            placeholder="Search..."
+            className="mt-3 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
           />
-          
-          {/* Filters */}
-          <div className="flex gap-2 flex-wrap">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="input-field text-sm"
-            >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="closed">Closed</option>
-              <option value="archived">Archived</option>
-            </select>
-            
-            <select
-              value={channelFilter}
-              onChange={(e) => setChannelFilter(e.target.value)}
-              className="input-field text-sm"
-            >
-              <option value="">All Channels</option>
-              <option value="web">Web</option>
-              <option value="line">LINE</option>
-              <option value="facebook">Facebook</option>
-              <option value="api">API</option>
-            </select>
-            
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="input-field text-sm"
-            >
-              <option value="">All Priority</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
-          </div>
-          
-          {/* Date Range */}
-          <div className="flex gap-2">
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="input-field text-sm flex-1"
-              placeholder="From date"
-            />
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="input-field text-sm flex-1"
-              placeholder="To date"
-            />
-          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="closed">Closed</option>
+          </select>
         </div>
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="p-4 text-center text-gray-500">Loading...</div>
-          ) : conversations.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">No conversations yet</div>
+            <div className="p-4 text-center text-gray-500">{t('loading') || 'Loading...'}</div>
+          ) : filteredConversations.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">{t('noData') || 'No conversations'}</div>
           ) : (
-            conversations.map((conv) => (
-              <Link
-                key={conv.id}
-                to={`/conversations/${conv.id}`}
-                className={`block p-4 border-b border-gray-100 hover:bg-gray-50 ${
-                  id === conv.id ? 'bg-primary-50' : ''
+            filteredConversations.map((conversation: any) => (
+              <div
+                key={conversation.id}
+                className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
+                  currentConversation?.id === conversation.id ? 'bg-blue-50' : ''
                 }`}
+                onClick={() => loadConversation(conversation.id)}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User size={20} className="text-gray-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">
-                      {conv.channel_user_id || 'Anonymous'}
-                    </p>
-                    <p className="text-sm text-gray-500 truncate">
-                      {conv.metadata?.last_message || 'No messages'}
-                    </p>
-                  </div>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    conv.status === 'active' 
-                      ? 'bg-green-100 text-green-600' 
-                      : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {conv.status}
-                  </span>
+                <div className="font-medium">{conversation.channel || 'Conversation'}</div>
+                <div className="text-sm text-gray-500 truncate">
+                  {conversation.metadata?.lastMessage || 'No messages yet'}
                 </div>
-              </Link>
+                <div className="text-xs text-gray-400 mt-1">
+                  {new Date(conversation.created_at).toLocaleString()}
+                </div>
+              </div>
             ))
           )}
         </div>
@@ -204,39 +116,34 @@ export default function Conversations() {
 
       {/* Chat Area */}
       <div className="flex-1 flex flex-col">
-        {id ? (
+        {currentConversation ? (
           <>
             <div className="p-4 border-b border-gray-200 bg-white">
               <h2 className="font-semibold">
-                Conversation with {currentConversation?.channel_user_id || 'User'}
+                {currentConversation.channel || 'Conversation'} - {currentConversation.status}
               </h2>
             </div>
-            <div className="flex-1 overflow-auto p-4 space-y-4">
-              {messages.length === 0 ? (
-                <div className="text-center text-gray-500 mt-8">
-                  No messages yet. Start the conversation!
-                </div>
-              ) : (
-                messages.map((msg, index) => (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.map((message: any, index: number) => (
+                <div
+                  key={index}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
                   <div
-                    key={index}
-                    className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-                  >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      msg.role === 'user' ? 'bg-primary-100' : 'bg-gray-200'
-                    }`}>
-                      {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-                    </div>
-                    <div className={`max-w-md p-3 rounded-lg ${
-                      msg.role === 'user' 
-                        ? 'bg-primary-600 text-white' 
+                    className={`max-w-[70%] rounded-lg p-3 ${
+                      message.role === 'user'
+                        ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-900'
-                    }`}>
-                      {msg.content}
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      {message.role === 'assistant' && <Bot size={16} className="mt-1" />}
+                      {message.role === 'user' && <User size={16} className="mt-1" />}
+                      <div>{message.content}</div>
                     </div>
                   </div>
-                ))
-              )}
+                </div>
+              ))}
             </div>
             <div className="p-4 border-t border-gray-200 bg-white">
               <div className="flex gap-2">
@@ -246,9 +153,12 @@ export default function Conversations() {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                   placeholder="Type a message..."
-                  className="input-field"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
                 />
-                <button onClick={sendMessage} className="btn-primary">
+                <button
+                  onClick={sendMessage}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
                   <Send size={20} />
                 </button>
               </div>

@@ -46,10 +46,6 @@ export class ConversationQueryDto {
   @IsOptional()
   @IsString()
   assigned_agent_id?: string;
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  assigned_agent_id?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -72,22 +68,6 @@ export class ConversationQueryDto {
   priority?: string;
 }
 
-export class SendMessageDto {
-  @ApiProperty()
-  @IsString()
-  content: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  model?: string;
-
-  @ApiPropertyOptional({ minimum: 0, maximum: 2 })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Max(2)
-  temperature?: number;
 export class SendMessageDto {
   @ApiProperty()
   @IsString()

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TicketsService } from './tickets.service';
 import { CreateTicketDto, TicketQueryDto, UpdateTicketDto } from './dto/tickets.dto';
@@ -13,31 +13,31 @@ export class TicketsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new ticket' })
-  create(@Body() createDto: CreateTicketDto, @Request() req) {
-    return this.ticketsService.create(createDto, req.tenantSchema, req.user.id);
+  create(@Body() createDto: CreateTicketDto, @Req() req: Request) {
+    return this.ticketsService.create(createDto, (req as any).tenantSchema, (req as any).user.id);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all tickets' })
-  findAll(@Query() query: TicketQueryDto, @Request() req) {
-    return this.ticketsService.findAll(query, req.tenantSchema);
+  findAll(@Query() query: TicketQueryDto, @Req() req: Request) {
+    return this.ticketsService.findAll(query, (req as any).tenantSchema);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a ticket by ID' })
-  findOne(@Param('id') id: string, @Request() req) {
-    return this.ticketsService.findOne(id, req.tenantSchema);
+  findOne(@Param('id') id: string, @Req() req: Request) {
+    return this.ticketsService.findOne(id, (req as any).tenantSchema);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update a ticket' })
-  update(@Param('id') id: string, @Body() updateDto: UpdateTicketDto, @Request() req) {
-    return this.ticketsService.update(id, updateDto, req.tenantSchema);
+  update(@Param('id') id: string, @Body() updateDto: UpdateTicketDto, @Req() req: Request) {
+    return this.ticketsService.update(id, updateDto, (req as any).tenantSchema);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a ticket' })
-  remove(@Param('id') id: string, @Request() req) {
-    return this.ticketsService.remove(id, req.tenantSchema);
+  remove(@Param('id') id: string, @Req() req: Request) {
+    return this.ticketsService.remove(id, (req as any).tenantSchema);
   }
 }
