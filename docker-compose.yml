@@ -51,7 +51,7 @@ services:
       - ./infrastructure/nginx/conf.d:/etc/nginx/conf.d:ro
       - ./infrastructure/nginx/ssl:/etc/nginx/ssl:ro
     ports:
-      - "8080:80"
+      - "80:80"
     depends_on:
       - api
       - admin-dashboard
@@ -112,7 +112,7 @@ services:
       context: ./services/admin-dashboard
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://57.180.64.19:8080/api
+        VITE_API_URL: http://omnichat.ordoai.co/api
     container_name: omnibot-admin
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:80"]
@@ -131,7 +131,7 @@ services:
       context: ./services/chat-widget
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://57.180.64.19:8080/api
+        VITE_API_URL: http://omnichat.ordoai.co/api
     container_name: omnibot-widget
     ports:
       - "5174:80"
