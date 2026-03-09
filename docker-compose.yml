@@ -10,6 +10,7 @@ services:
       POSTGRES_DB: omnibot
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U omnibot"]
