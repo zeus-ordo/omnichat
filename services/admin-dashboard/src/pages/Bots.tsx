@@ -46,6 +46,26 @@ interface Bot {
 
 const defaultBots: Bot[] = [
   {
+    id: '0',
+    name: 'Website Guide Bot',
+    avatar: undefined,
+    model: 'GPT-4o',
+    database: 'omnibot_help',
+    channels: [
+      { id: '1', type: 'web', enabled: true, name: 'Website' },
+      { id: '2', type: 'line', enabled: false, name: 'LINE' },
+      { id: '3', type: 'facebook', enabled: false, name: 'Facebook' },
+      { id: '4', type: 'api', enabled: true, name: 'REST API' },
+    ],
+    surveys: [],
+    surveysCount: 0,
+    documentsCount: 0,
+    conversationsCount: 0,
+    messagesCount: 0,
+    lastActive: 'Just now',
+    isActive: true,
+  },
+  {
     id: '1',
     name: 'Customer Support Bot',
     avatar: undefined,
@@ -123,6 +143,7 @@ const channelIcons: Record<string, typeof Globe> = {
 // Available databases for selection
 const databaseOptions = [
   { value: 'omnibot_db', label: 'omnibot_db' },
+  { value: 'omnibot_help', label: 'omnibot_help' },
   { value: 'omnibot_sales', label: 'omnibot_sales' },
   { value: 'omnibot_hr', label: 'omnibot_hr' },
   { value: 'omnibot_support', label: 'omnibot_support' },
