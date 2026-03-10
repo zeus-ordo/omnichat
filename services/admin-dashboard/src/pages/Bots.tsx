@@ -264,11 +264,11 @@ export default function Bots() {
   }
 
   return (
-    <div className="p-8">
+    <div className="page-shell">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('bots')}</h1>
-          <p className="text-gray-500 mt-1">{t('botSettings')}</p>
+          <h1 className="page-header-title">{t('bots')}</h1>
+          <p className="page-header-subtitle">{t('botSettings')}</p>
         </div>
         <button 
           onClick={handleCreateBot}
@@ -441,7 +441,7 @@ export default function Bots() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">
+                  <h2 className="modal-title">
                 {editingBot ? t('editBot') : t('createBot')}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">

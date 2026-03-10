@@ -62,8 +62,8 @@ export default function Channels() {
   ]
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">{t('channels') || 'Channels'}</h1>
+    <div className="page-shell">
+      <h1 className="page-header-title mb-8">{t('channels') || 'Channels'}</h1>
 
       {loading ? (
         <div className="text-center py-8">{t('loading') || 'Loading...'}</div>

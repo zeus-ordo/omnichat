@@ -79,11 +79,11 @@ export default function Users() {
   }
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="page-shell">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">{t('teamMembers') || '團隊成員'}</h1>
-          <p className="text-gray-500 mt-1">{t('manageTeamMembers') || '管理團隊成員和權限'}</p>
+          <h1 className="page-header-title">{t('teamMembers') || '團隊成員'}</h1>
+          <p className="page-header-subtitle">{t('manageTeamMembers') || '管理團隊成員和權限'}</p>
         </div>
         <button
           onClick={() => { setEditingUser(null); setFormData({ email: '', password: '', name: '', role: 'agent' }); setShowModal(true) }}
@@ -178,7 +178,7 @@ export default function Users() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-apple-xl shadow-apple-lg w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">
+              <h2 className="modal-title">
                 {editingUser ? (t('editUser') || '編輯使用者') : (t('addUser') || '新增使用者')}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">

@@ -193,11 +193,11 @@ export default function Surveys() {
   }
 
   return (
-    <div className="p-8">
+    <div className="page-shell">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('surveys')}</h1>
-          <p className="text-gray-500 mt-1">{t('createAndManageFeedbackSurveys')}</p>
+          <h1 className="page-header-title">{t('surveys')}</h1>
+          <p className="page-header-subtitle">{t('createAndManageFeedbackSurveys')}</p>
         </div>
         <button 
           onClick={() => { resetForm(); setShowModal(true) }}

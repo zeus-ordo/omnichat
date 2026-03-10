@@ -69,11 +69,11 @@ export default function ApiKeys() {
   }
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="page-shell">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">{t('apiKeys')}</h1>
-          <p className="text-gray-500 mt-1">{t('manageApiKeys') || '管理 API 金鑰用於第三方整合'}</p>
+          <h1 className="page-header-title">{t('apiKeys')}</h1>
+          <p className="page-header-subtitle">{t('manageApiKeys') || '管理 API 金鑰用於第三方整合'}</p>
         </div>
         <button
           onClick={() => { setFormData({ name: '', expires_at: '' }); setShowModal(true) }}
@@ -176,7 +176,7 @@ export default function ApiKeys() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-apple-xl shadow-apple-lg w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">{t('createApiKey') || '建立 API Key'}</h2>
+              <h2 className="modal-title">{t('createApiKey') || '建立 API Key'}</h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
                 <X size={20} />
               </button>

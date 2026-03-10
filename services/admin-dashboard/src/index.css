@@ -41,6 +41,22 @@ body {
 }
 
 @layer components {
+  .page-shell {
+    @apply p-6 md:p-8;
+  }
+
+  .page-header-title {
+    @apply text-2xl font-semibold text-gray-900 tracking-tight;
+  }
+
+  .page-header-subtitle {
+    @apply text-sm text-gray-500 mt-1 leading-6;
+  }
+
+  .modal-title {
+    @apply text-xl font-semibold text-gray-900;
+  }
+
   /* Apple-style buttons */
   .btn-primary {
     @apply px-5 py-2.5 bg-primary-600 text-white rounded-apple font-medium 

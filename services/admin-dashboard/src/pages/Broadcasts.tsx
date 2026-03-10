@@ -99,9 +99,9 @@ export default function Broadcasts() {
   })
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="page-shell">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold">{t('broadcasts') || 'Broadcasts'}</h1>
+        <h1 className="page-header-title">{t('broadcasts') || 'Broadcasts'}</h1>
         <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -194,7 +194,7 @@ export default function Broadcasts() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4">{t('createNew') || 'Create New Broadcast'}</h2>
+            <h2 className="modal-title mb-4">{t('createNew') || 'Create New Broadcast'}</h2>
             <form onSubmit={createBroadcast}>
               <div className="space-y-4">
                 <div>

@@ -98,9 +98,9 @@ export default function Analytics() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="page-shell space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{t('analytics') || 'Analytics'}</h1>
+        <h1 className="page-header-title">{t('analytics') || 'Analytics'}</h1>
         <select
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}

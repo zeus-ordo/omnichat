@@ -85,9 +85,9 @@ export default function Tickets() {
   }
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="page-shell">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold">{t('tickets') || 'Tickets'}</h1>
+        <h1 className="page-header-title">{t('tickets') || 'Tickets'}</h1>
         <button
           onClick={() => setShowModal(true)}
           className="btn-primary flex items-center gap-2"
@@ -193,7 +193,7 @@ export default function Tickets() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">{t('createNewTicket')}</h2>
+            <h2 className="modal-title mb-4">{t('createNewTicket')}</h2>
             <form onSubmit={createTicket}>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">{t('subject')}</label>

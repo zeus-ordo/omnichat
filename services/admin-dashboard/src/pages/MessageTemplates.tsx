@@ -4,8 +4,8 @@ export default function MessageTemplates() {
   const { t } = useLanguageStore()
   
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">
+    <div className="page-shell">
+      <h1 className="page-header-title mb-8">
         {t('messageTemplates') || 'Message Templates'}
       </h1>
       <div className="bg-white rounded-xl p-6 shadow-sm">
