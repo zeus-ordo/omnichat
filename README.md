@@ -154,6 +154,10 @@ curl -X POST http://localhost/api/conversations/:id/messages \
 2. 配置 HTTPS/SSL
 3. 使用 Kubernetes 或 Docker Swarm 進行擴展
 
+更多部署與維運文件：
+- `DEPLOY.md`
+- `RUNBOOK.md`
+
 ## License
 
 MIT
