@@ -118,7 +118,7 @@ services:
       context: ./services/admin-dashboard
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://omnichat.ordoai.co/api}
+        VITE_API_URL: ${VITE_API_URL:-/api}
     container_name: omnibot-admin
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:80"]
@@ -137,7 +137,7 @@ services:
       context: ./services/chat-widget
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://omnichat.ordoai.co/api}
+        VITE_API_URL: ${VITE_API_URL:-/api}
     container_name: omnibot-widget
     ports:
       - "5174:80"
