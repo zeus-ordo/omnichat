@@ -47,7 +47,7 @@ interface Bot {
 const defaultBots: Bot[] = [
   {
     id: '0',
-    name: 'Website Guide Bot',
+    name: '系統小助手',
     avatar: undefined,
     model: 'GPT-4o',
     database: 'omnibot_help',
