@@ -65,7 +65,8 @@ export default function Conversations() {
   })
 
   return (
-    <div className="h-[calc(100vh-2rem)] flex">
+    <div className="h-[calc(100vh-2rem)] p-6 md:p-8">
+      <div className="h-full flex bg-white rounded-apple-xl border border-gray-200 overflow-hidden shadow-sm">
       {/* Conversations List */}
       <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
         <div className="p-4 border-b border-gray-200">
@@ -169,6 +170,7 @@ export default function Conversations() {
             {t('selectConversationToStartChatting')}
           </div>
         )}
+      </div>
       </div>
     </div>
   )

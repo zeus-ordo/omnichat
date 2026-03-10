@@ -69,8 +69,8 @@ export default function ApiKeys() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">{t('apiKeys')}</h1>
           <p className="text-gray-500 mt-1">{t('manageApiKeys') || '管理 API 金鑰用於第三方整合'}</p>
@@ -117,7 +117,8 @@ export default function ApiKeys() {
         <div className="text-center py-12 text-gray-500">載入中...</div>
       ) : (
         <div className="bg-white rounded-apple-xl shadow-apple-lg overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('name') || '名稱'}</th>
@@ -161,6 +162,7 @@ export default function ApiKeys() {
               ))}
             </tbody>
           </table>
+          </div>
           {apiKeys.length === 0 && (
             <div className="text-center py-12 text-gray-500">
               {t('noApiKeys') || '尚無 API Keys'}

@@ -99,8 +99,8 @@ export default function Broadcasts() {
   })
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold">{t('broadcasts') || 'Broadcasts'}</h1>
         <button
           onClick={() => setShowModal(true)}
@@ -111,7 +111,7 @@ export default function Broadcasts() {
         </button>
       </div>
 
-      <div className="mb-4 flex gap-4">
+      <div className="mb-4 flex flex-col sm:flex-row gap-3 sm:gap-4">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -131,7 +131,8 @@ export default function Broadcasts() {
         <div className="text-center py-8 text-gray-500">{t('noData') || 'No broadcasts found'}</div>
       ) : (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('status')}</th>
@@ -186,6 +187,7 @@ export default function Broadcasts() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

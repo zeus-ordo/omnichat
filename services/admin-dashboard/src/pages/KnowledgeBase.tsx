@@ -64,8 +64,8 @@ export default function KnowledgeBase() {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <h1 className="text-2xl font-bold text-gray-900">{t('knowledgeBase')}</h1>
         <label className="btn-primary cursor-pointer flex items-center gap-2">
           <Upload size={20} />

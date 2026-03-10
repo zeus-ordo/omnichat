@@ -86,7 +86,7 @@ export default function Dashboard() {
   ]
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in p-6 md:p-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">{t('dashboard')}</h1>

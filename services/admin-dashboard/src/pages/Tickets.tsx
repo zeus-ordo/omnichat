@@ -85,8 +85,8 @@ export default function Tickets() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold">{t('tickets') || 'Tickets'}</h1>
         <button
           onClick={() => setShowModal(true)}
@@ -98,11 +98,11 @@ export default function Tickets() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="input-field"
+          className="input-field w-full sm:w-56"
         >
           <option value="">{t('allStatus')}</option>
           <option value="open">{t('open')}</option>
@@ -114,7 +114,7 @@ export default function Tickets() {
         <select
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
-          className="input-field"
+          className="input-field w-full sm:w-56"
         >
           <option value="">{t('allPriority')}</option>
           <option value="high">{t('high')}</option>

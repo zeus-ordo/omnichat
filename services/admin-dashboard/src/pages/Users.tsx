@@ -79,8 +79,8 @@ export default function Users() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">{t('teamMembers') || '團隊成員'}</h1>
           <p className="text-gray-500 mt-1">{t('manageTeamMembers') || '管理團隊成員和權限'}</p>
@@ -98,7 +98,8 @@ export default function Users() {
         <div className="text-center py-12 text-gray-500">載入中...</div>
       ) : (
         <div className="bg-white rounded-apple-xl shadow-apple-lg overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[860px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('user') || '使用者'}</th>
@@ -163,6 +164,7 @@ export default function Users() {
               ))}
             </tbody>
           </table>
+          </div>
           {users.length === 0 && (
             <div className="text-center py-12 text-gray-500">
               {t('noUsers') || '尚無使用者'}
