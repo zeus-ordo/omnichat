@@ -126,9 +126,9 @@ export default function Broadcasts() {
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-500">{t('loading') || 'Loading...'}</div>
+        <div className="empty-state">{t('loading') || 'Loading...'}</div>
       ) : filteredBroadcasts.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">{t('noData') || 'No broadcasts found'}</div>
+        <div className="empty-state">{t('noData') || 'No broadcasts found'}</div>
       ) : (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -144,7 +144,7 @@ export default function Broadcasts() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredBroadcasts.map((broadcast: any) => (
-                <tr key={broadcast.id} className="hover:bg-gray-50">
+                <tr key={broadcast.id} className="interactive-row">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       {getStatusIcon(broadcast.status)}
@@ -245,7 +245,7 @@ export default function Broadcasts() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                  className="btn-ghost"
                 >
                   {t('cancel') || 'Cancel'}
                 </button>

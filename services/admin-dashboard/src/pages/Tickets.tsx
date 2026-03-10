@@ -125,9 +125,9 @@ export default function Tickets() {
 
       {/* Tickets List */}
       {loading ? (
-        <div className="text-center py-8 text-gray-500">{t('loading')}</div>
+        <div className="empty-state">{t('loading')}</div>
       ) : tickets.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">{t('noTicketsFound')}</div>
+        <div className="empty-state">{t('noTicketsFound')}</div>
       ) : (
         <div className="space-y-4">
           {tickets.map((ticket) => (

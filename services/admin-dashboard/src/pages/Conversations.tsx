@@ -97,7 +97,7 @@ export default function Conversations() {
             filteredConversations.map((conversation: any) => (
               <div
                 key={conversation.id}
-                className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
+                className={`p-4 border-b border-gray-100 cursor-pointer interactive-row ${
                   currentConversation?.id === conversation.id ? 'bg-blue-50' : ''
                 }`}
                 onClick={() => loadConversation(conversation.id)}

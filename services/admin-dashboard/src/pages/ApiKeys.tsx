@@ -114,7 +114,7 @@ export default function ApiKeys() {
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">載入中...</div>
+        <div className="empty-state">載入中...</div>
       ) : (
         <div className="bg-white rounded-apple-xl shadow-apple-lg overflow-hidden">
           <div className="overflow-x-auto">
@@ -131,7 +131,7 @@ export default function ApiKeys() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {apiKeys.map((keyItem) => (
-                <tr key={keyItem.id} className="hover:bg-gray-50">
+                <tr key={keyItem.id} className="interactive-row">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Key size={18} className="text-gray-400" />
@@ -164,7 +164,7 @@ export default function ApiKeys() {
           </table>
           </div>
           {apiKeys.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
+            <div className="empty-state">
               {t('noApiKeys') || '尚無 API Keys'}
             </div>
           )}
@@ -177,7 +177,7 @@ export default function ApiKeys() {
           <div className="bg-white rounded-apple-xl shadow-apple-lg w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="modal-title">{t('createApiKey') || '建立 API Key'}</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button onClick={() => setShowModal(false)} className="icon-btn">
                 <X size={20} />
               </button>
             </div>

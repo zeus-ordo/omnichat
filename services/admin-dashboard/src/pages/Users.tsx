@@ -95,7 +95,7 @@ export default function Users() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">載入中...</div>
+        <div className="empty-state">載入中...</div>
       ) : (
         <div className="bg-white rounded-apple-xl shadow-apple-lg overflow-hidden">
           <div className="overflow-x-auto">
@@ -111,7 +111,7 @@ export default function Users() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user.id} className="interactive-row">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
@@ -147,7 +147,7 @@ export default function Users() {
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => openEditModal(user)}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                      className="icon-btn"
                     >
                       <Edit2 size={18} />
                     </button>
@@ -166,7 +166,7 @@ export default function Users() {
           </table>
           </div>
           {users.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
+            <div className="empty-state">
               {t('noUsers') || '尚無使用者'}
             </div>
           )}
@@ -181,7 +181,7 @@ export default function Users() {
               <h2 className="modal-title">
                 {editingUser ? (t('editUser') || '編輯使用者') : (t('addUser') || '新增使用者')}
               </h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button onClick={() => setShowModal(false)} className="icon-btn">
                 <X size={20} />
               </button>
             </div>
