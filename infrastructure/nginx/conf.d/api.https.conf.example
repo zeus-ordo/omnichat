@@ -1,23 +1,29 @@
-# API Gateway Configuration
 server {
     listen 80;
-    server_name omnichat.ordoai.co localhost;
+    server_name omnichat.ordoai.co;
+    return 301 https://$host$request_uri;
+}
 
-    # Security headers
+server {
+    listen 443 ssl http2;
+    server_name omnichat.ordoai.co;
+
+    ssl_certificate /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
 
-    # Health check endpoint
     location = /health {
         access_log off;
         return 200 "OK";
     }
 
-    # API Routes
     location /api/ {
         limit_req zone=api burst=20 nodelay;
-        
         proxy_pass http://api_backend/api/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -27,59 +33,42 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-        
-        proxy_connect_timeout 30s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
     }
 
-    # AI Engine Routes
     location /ai/ {
         limit_req zone=api burst=30 nodelay;
-        
         proxy_pass http://ai_backend;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 120s;
-        proxy_read_timeout 120s;
     }
 
-    # Backward compatibility for old /admin URL
     location = /admin {
         return 301 /;
     }
 
-    # Backward compatibility for /admin/*
     location /admin/ {
         return 301 /;
     }
 
-    # Chat Widget
     location /widget/ {
         proxy_pass http://widget_backend;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        
         add_header X-Frame-Options "ALLOW-FROM *" always;
     }
 
-    # Widget JS
     location = /widget.js {
         proxy_pass http://widget_backend/widget.js;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
-        
         expires 1d;
         add_header Cache-Control "public, immutable";
     }
 
-    # Admin Dashboard at root
     location / {
         proxy_pass http://admin_backend/;
         proxy_http_version 1.1;

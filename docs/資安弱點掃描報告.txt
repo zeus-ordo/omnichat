@@ -50,7 +50,7 @@
 | 編號 | VULN-002 |
 | 位置 | `.env:14` |
 | 問題描述 | OpenAI API 金鑰以明文形式儲存於環境變數檔案中 |
-| 問題程式碼 | `OPENAI_API_KEY=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` |
+| 問題程式碼 | `OPENAI_API_KEY=sk-proj-REDACTED` |
 | 風險說明 | API 金鑰洩漏可能導致帳單被盜用、服務濫用 |
 | 修復建議 | 1. 立即輪換此 API 金鑰 2. 使用金鑰管理服務 (AWS Secrets Manager / HashiCorp Vault) 3. 勿將實際金鑰提交至版本控制 |
 

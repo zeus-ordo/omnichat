@@ -1,13 +1,11 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
     container_name: omnibot-db
     environment:
-      POSTGRES_USER: omnibot
-      POSTGRES_PASSWORD: omnibot_secure_pass
-      POSTGRES_DB: omnibot
+      POSTGRES_USER: ${DB_USER:-omnibot}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-CHANGE_ME_IN_PRODUCTION}
+      POSTGRES_DB: ${DB_NAME:-omnibot}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -66,11 +64,16 @@ services:
     container_name: omnibot-api
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://omnibot:omnibot_secure_pass@postgres:5432/omnibot
+      DATABASE_URL: postgresql://${DB_USER:-omnibot}:${DB_PASSWORD:-CHANGE_ME_IN_PRODUCTION}@postgres:5432/${DB_NAME:-omnibot}
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: omnibot-secret-key-12345
-      JWT_EXPIRES_IN: 7d
-      OPENAI_API_KEY: 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
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_TO_STRONG_RANDOM_SECRET_MIN_32_CHARS}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET:-}
+      FACEBOOK_PAGE_ACCESS_TOKEN: ${FACEBOOK_PAGE_ACCESS_TOKEN:-}
+      FACEBOOK_PAGE_ID: ${FACEBOOK_PAGE_ID:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -90,12 +93,14 @@ services:
     environment:
       API_HOST: 0.0.0.0
       API_PORT: 8000
-      DATABASE_URL: postgresql://omnibot:omnibot_secure_pass@postgres:5432/omnibot
+      DATABASE_URL: postgresql://${DB_USER:-omnibot}:${DB_PASSWORD:-CHANGE_ME_IN_PRODUCTION}@postgres:5432/${DB_NAME:-omnibot}
       REDIS_URL: redis://redis:6379
-      OPENAI_API_KEY: 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
-      QDRANT_URL: http://qdrant:6333
-      DEFAULT_MODEL: gpt-4o
-      EMBEDDING_MODEL: text-embedding-3-small
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-4o}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
     depends_on:
       postgres:
         condition: service_healthy
@@ -112,7 +117,7 @@ services:
       context: ./services/admin-dashboard
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://omnichat.ordoai.co/api
+        VITE_API_URL: ${VITE_API_URL:-http://omnichat.ordoai.co/api}
     container_name: omnibot-admin
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:80"]
@@ -131,7 +136,7 @@ services:
       context: ./services/chat-widget
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://omnichat.ordoai.co/api
+        VITE_API_URL: ${VITE_API_URL:-http://omnichat.ordoai.co/api}
     container_name: omnibot-widget
     ports:
       - "5174:80"
@@ -143,8 +148,8 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: omnibot-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: omnibot
-      RABBITMQ_DEFAULT_PASS: omnibot_rabbitmq_pass
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-omnibot}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-CHANGE_ME_IN_PRODUCTION}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:

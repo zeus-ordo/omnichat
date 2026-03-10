@@ -202,7 +202,7 @@ await this.dataSource.query(
 #### 問題程式碼（修復前）
 
 ```env
-OPENAI_API_KEY=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
+OPENAI_API_KEY=sk-proj-REDACTED
 ```
 
 #### 風險分析
