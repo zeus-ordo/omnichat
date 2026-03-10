@@ -22,7 +22,7 @@ export default function Login() {
       await login(email, password)
       navigate('/')
     } catch (err: any) {
-      setError(err.response?.data?.message || t('signIn'))
+      setError(err.response?.data?.message || 'Login failed. Please check your account or network connection.')
     } finally {
       setLoading(false)
     }
