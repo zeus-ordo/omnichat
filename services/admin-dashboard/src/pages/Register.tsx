@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Sparkles } from 'lucide-react'
 import { useAuthStore } from '../store/auth'
 import { useLanguageStore } from '../store/language'
+import ErrorModal from '../components/ErrorModal'
+import { getErrorMessage } from '../lib/error'
 
 export default function Register() {
   const [name, setName] = useState('')
@@ -30,7 +32,7 @@ export default function Register() {
       await register(name, email, password)
       navigate('/')
     } catch (err: any) {
-      setError(err.response?.data?.message || t('registrationFailed'))
+      setError(getErrorMessage(err, t('registrationFailed')))
     } finally {
       setLoading(false)
     }
@@ -48,8 +50,6 @@ export default function Register() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('name')}</label>
             <input
@@ -111,6 +111,13 @@ export default function Register() {
           </Link>
         </div>
       </div>
+
+      <ErrorModal
+        open={Boolean(error)}
+        title="註冊失敗"
+        message={error}
+        onClose={() => setError('')}
+      />
     </div>
   )
 }

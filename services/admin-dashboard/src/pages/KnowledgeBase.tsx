@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { useLanguageStore } from '../store/language'
 import { FileText, Upload, CheckCircle, XCircle, Loader } from 'lucide-react'
+import ErrorModal from '../components/ErrorModal'
+import { getErrorMessage } from '../lib/error'
 
 export default function KnowledgeBase() {
   const [documents, setDocuments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState('')
   const { t } = useLanguageStore()
 
   useEffect(() => {
@@ -18,7 +21,7 @@ export default function KnowledgeBase() {
       const response = await api.get('/documents')
       setDocuments(response.data || [])
     } catch (error) {
-      console.error('Failed to load documents', error)
+      setError(getErrorMessage(error, '讀取知識庫失敗'))
     } finally {
       setLoading(false)
     }
@@ -44,7 +47,7 @@ export default function KnowledgeBase() {
       
       await loadDocuments()
     } catch (error) {
-      console.error('Failed to upload', error)
+      setError(getErrorMessage(error, '上傳知識庫失敗'))
     } finally {
       setUploading(false)
     }
@@ -64,7 +67,8 @@ export default function KnowledgeBase() {
   }
 
   return (
-    <div className="page-shell">
+    <>
+      <div className="page-shell">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <h1 className="page-header-title">{t('knowledgeBase')}</h1>
         <label className="btn-primary cursor-pointer flex items-center gap-2">
@@ -116,6 +120,13 @@ export default function KnowledgeBase() {
           </div>
         )}
       </div>
-    </div>
+
+      <ErrorModal
+        open={Boolean(error)}
+        title="知識庫操作失敗"
+        message={error}
+        onClose={() => setError('')}
+      />
+    </>
   )
 }

@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/auth'
 import { Sparkles } from 'lucide-react'
 import { useLanguageStore } from '../store/language'
+import ErrorModal from '../components/ErrorModal'
+import { getErrorMessage } from '../lib/error'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -22,7 +24,7 @@ export default function Login() {
       await login(email, password)
       navigate('/')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please check your account or network connection.')
+      setError(getErrorMessage(err, 'Login failed. Please check your account or network connection.'))
     } finally {
       setLoading(false)
     }
@@ -40,11 +42,6 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -88,6 +85,13 @@ export default function Login() {
           </Link>
         </div>
       </div>
+
+      <ErrorModal
+        open={Boolean(error)}
+        title="登入失敗"
+        message={error}
+        onClose={() => setError('')}
+      />
     </div>
   )
 }
