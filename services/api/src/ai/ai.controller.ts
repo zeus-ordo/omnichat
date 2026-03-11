@@ -1,8 +1,35 @@
-import { Controller, Post, Body, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Put,
+  Get,
+  Body,
+  Req,
+  UseGuards,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
 import { AiService } from './ai.service';
 import { SurveysService } from '../surveys/surveys.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+interface AssistantHistoryItem {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface AssistantConfig {
+  prompt: string;
+  welcomeMessage: string;
+  scopeNotes: string;
+}
+
+interface AssistantConfigPayload {
+  prompt?: string;
+  welcomeMessage?: string;
+  scopeNotes?: string;
+}
 
 @ApiTags('AI')
 @Controller('ai')
@@ -12,6 +39,109 @@ export class AiController {
     private readonly dataSource: DataSource,
     private readonly surveysService: SurveysService,
   ) {}
+
+  private getDefaultAssistantConfig(): AssistantConfig {
+    return {
+      prompt:
+        '你是 OmniChat 的網站使用導覽助理。你的任務是引導已登入使用者快速學會使用網站功能。回答要簡潔、步驟化、可執行，預設使用繁體中文。若使用者提到頁面名稱（Dashboard、Bots、Channels、Knowledge Base、Conversations、Analytics、Settings），請給對應操作步驟。若資訊不足，先問一個最小必要問題再繼續。',
+      welcomeMessage:
+        '嗨，我是系統小助手。你可以問我「怎麼建立機器人」、「怎麼串接 LINE」、「怎麼看報表」等操作問題。',
+      scopeNotes:
+        '重點功能：Dashboard、Bots、Channels、Knowledge Base、Conversations、Analytics、Settings。',
+    };
+  }
+
+  private resolveAssistantConfig(tenantSettings: any): AssistantConfig {
+    const defaults = this.getDefaultAssistantConfig();
+    const settings = tenantSettings || {};
+    const stored = settings.website_assistant || {};
+
+    return {
+      prompt: (stored.prompt || settings.system_prompt || defaults.prompt).toString(),
+      welcomeMessage: (stored.welcomeMessage || defaults.welcomeMessage).toString(),
+      scopeNotes: (stored.scopeNotes || defaults.scopeNotes).toString(),
+    };
+  }
+
+  @Get('assistant/config')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get website assistant config for current tenant' })
+  getAssistantConfig(@Req() req: Request) {
+    const tenantSettings = (req as any).tenantSettings || {};
+    return this.resolveAssistantConfig(tenantSettings);
+  }
+
+  @Put('assistant/config')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update website assistant config (admin/owner only)' })
+  async updateAssistantConfig(
+    @Body() payload: AssistantConfigPayload,
+    @Req() req: Request,
+  ) {
+    const user = (req as any).user;
+    if (!user || !['owner', 'admin'].includes(user.role)) {
+      throw new ForbiddenException('Only admin/owner can update assistant config');
+    }
+
+    const tenantSchema = (req as any).tenantSchema;
+    const tenantSettings = (req as any).tenantSettings || {};
+    const current = this.resolveAssistantConfig(tenantSettings);
+
+    const next: AssistantConfig = {
+      prompt: payload.prompt?.trim() || current.prompt,
+      welcomeMessage: payload.welcomeMessage?.trim() || current.welcomeMessage,
+      scopeNotes: payload.scopeNotes?.trim() || current.scopeNotes,
+    };
+
+    await this.dataSource.query(
+      `UPDATE tenants
+       SET settings = COALESCE(settings, '{}'::jsonb)
+                     || jsonb_build_object('website_assistant', $1::jsonb, 'system_prompt', $2)
+       WHERE schema_name = $3`,
+      [JSON.stringify(next), next.prompt, tenantSchema],
+    );
+
+    return {
+      success: true,
+      config: next,
+    };
+  }
+
+  @Post('assistant/chat')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Chat with website guide assistant (authenticated)' })
+  async assistantChat(
+    @Body() body: { message: string; history?: AssistantHistoryItem[] },
+    @Req() req: Request,
+  ) {
+    const tenantSettings = (req as any).tenantSettings || {};
+    const assistantConfig = this.resolveAssistantConfig(tenantSettings);
+
+    const safeHistory = Array.isArray(body.history)
+      ? body.history
+          .filter((item) => item && ['user', 'assistant'].includes(item.role) && item.content)
+          .slice(-12)
+      : [];
+
+    const aiResponse = await this.aiService.chat(
+      body.message,
+      safeHistory,
+      {
+        ...tenantSettings,
+        system_prompt: `${assistantConfig.prompt}\n\n導覽範圍補充：${assistantConfig.scopeNotes}`,
+      },
+      {},
+    );
+
+    return {
+      content: aiResponse.content,
+      model: aiResponse.model,
+      tokens_used: aiResponse.tokens_used,
+    };
+  }
 
   @Post('chat')
   @UseGuards()

@@ -15,6 +15,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { SurveysModule } from './surveys/surveys.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { BroadcastsModule } from './broadcasts/broadcasts.module';
+import { BotsModule } from './bots/bots.module';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
 
 @Module({
@@ -88,6 +89,7 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
     SurveysModule,
     TicketsModule,
     BroadcastsModule,
+    BotsModule,
   ],
 })
 export class AppModule {
