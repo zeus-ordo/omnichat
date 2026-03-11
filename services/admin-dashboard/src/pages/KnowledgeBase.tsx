@@ -127,6 +127,7 @@ export default function KnowledgeBase() {
         message={error}
         onClose={() => setError('')}
       />
+      </div>
     </>
   )
 }
