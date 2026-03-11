@@ -19,6 +19,7 @@ import { BotsService } from './bots.service';
 import { DataSource } from 'typeorm';
 import { AiService } from '../ai/ai.service';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { Request } from 'express';
 
 @ApiTags('Bots')
 @Controller('bots')
