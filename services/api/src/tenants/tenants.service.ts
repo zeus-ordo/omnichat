@@ -6,6 +6,59 @@ import { v4 as uuidv4 } from 'uuid';
 export class TenantsService {
   constructor(private dataSource: DataSource) {}
 
+  private isValidSchemaName(schemaName: string): boolean {
+    return /^[a-z][a-z0-9_]*$/.test(schemaName) && schemaName.length <= 64;
+  }
+
+  private async createTenantSchemaFromTemplate(schemaName: string) {
+    if (!this.isValidSchemaName(schemaName)) {
+      throw new Error('Invalid schema name');
+    }
+
+    const tables = [
+      'users',
+      'conversations',
+      'messages',
+      'documents',
+      'flows',
+      'flow_logs',
+      'surveys',
+      'survey_responses',
+      'message_templates',
+      'tickets',
+      'broadcasts',
+    ];
+
+    await this.dataSource.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
+
+    for (const table of tables) {
+      await this.dataSource.query(
+        `CREATE TABLE IF NOT EXISTS "${schemaName}".${table} (LIKE tenant_demo.${table} INCLUDING ALL)`,
+      );
+    }
+
+    const triggerTables = [
+      'users',
+      'conversations',
+      'documents',
+      'flows',
+      'surveys',
+      'message_templates',
+      'tickets',
+      'broadcasts',
+    ];
+
+    for (const table of triggerTables) {
+      await this.dataSource.query(
+        `DROP TRIGGER IF EXISTS update_${schemaName}_${table}_updated_at ON "${schemaName}".${table}`,
+      );
+      await this.dataSource.query(
+        `CREATE TRIGGER update_${schemaName}_${table}_updated_at BEFORE UPDATE ON "${schemaName}".${table}
+         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`,
+      );
+    }
+  }
+
   async findAll() {
     return this.dataSource.query('SELECT * FROM tenants ORDER BY created_at DESC');
   }
@@ -29,8 +82,7 @@ export class TenantsService {
       [data.name, schemaName, data.plan || 'free'],
     );
 
-    // Create tenant schema
-    await this.dataSource.query(`SELECT create_tenant_schema($1)`, [schemaName]);
+    await this.createTenantSchemaFromTemplate(schemaName);
 
     return result[0];
   }

@@ -57,6 +57,55 @@ export class AuthService {
     return null;
   }
 
+  private async createTenantSchemaFromTemplate(schemaName: string) {
+    if (!this.isValidSchemaName(schemaName)) {
+      throw new UnauthorizedException('Invalid tenant schema');
+    }
+
+    const tables = [
+      'users',
+      'conversations',
+      'messages',
+      'documents',
+      'flows',
+      'flow_logs',
+      'surveys',
+      'survey_responses',
+      'message_templates',
+      'tickets',
+      'broadcasts',
+    ];
+
+    await this.dataSource.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
+
+    for (const table of tables) {
+      await this.dataSource.query(
+        `CREATE TABLE IF NOT EXISTS "${schemaName}".${table} (LIKE tenant_demo.${table} INCLUDING ALL)`,
+      );
+    }
+
+    const triggerTables = [
+      'users',
+      'conversations',
+      'documents',
+      'flows',
+      'surveys',
+      'message_templates',
+      'tickets',
+      'broadcasts',
+    ];
+
+    for (const table of triggerTables) {
+      await this.dataSource.query(
+        `DROP TRIGGER IF EXISTS update_${schemaName}_${table}_updated_at ON "${schemaName}".${table}`,
+      );
+      await this.dataSource.query(
+        `CREATE TRIGGER update_${schemaName}_${table}_updated_at BEFORE UPDATE ON "${schemaName}".${table}
+         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`,
+      );
+    }
+  }
+
   async login(loginDto: LoginDto, tenantSchema: string) {
     const { email, password } = loginDto;
 
@@ -114,7 +163,7 @@ export class AuthService {
       [tenantName, schemaName],
     );
 
-    await this.dataSource.query(`SELECT create_tenant_schema($1)`, [schemaName]);
+    await this.createTenantSchemaFromTemplate(schemaName);
 
     // Create user
     const result = await this.dataSource.query(
