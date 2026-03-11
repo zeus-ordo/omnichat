@@ -61,6 +61,12 @@ curl -I https://omnichat.ordoai.co
 curl -I http://localhost/health
 ```
 
+或使用 smoke script：
+
+```bash
+bash scripts/smoke-test.sh https://omnichat.ordoai.co superadmin@omnichat.ordoai.co OmniAdmin@2026!
+```
+
 ## 5. HTTPS 設定摘要
 
 1) Cloudflare DNS
@@ -87,3 +93,18 @@ curl -I http://localhost/health
 - 金鑰只放 `.env`
 - 已暴露過的金鑰必須輪替（尤其 OpenAI）
 - 定期備份 PostgreSQL
+
+## 7. CI/CD（GitHub Actions）
+
+已提供 workflow：`.github/workflows/deploy.yml`
+
+需要在 GitHub repository secrets 設定：
+- `PROD_HOST`
+- `PROD_USER`
+- `PROD_SSH_KEY`
+
+流程：
+1. push 到 `master`
+2. workflow 先驗證 compose
+3. SSH 到 production 主機自動 deploy
+4. 執行 `scripts/smoke-test.sh` 驗證

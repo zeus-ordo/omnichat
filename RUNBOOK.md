@@ -126,7 +126,57 @@ sudo docker logs --tail=300 omnibot-admin > /tmp/admin.tail.log
   - 修復步驟
   - 後續預防措施
 
-## 7. 緊急回復 (Rollback)
+### Webhook 觀測
+
+Bot API channel webhook 會寫入 `webhook_logs`，可由 API 查詢：
+
+```bash
+curl -sS "https://omnichat.ordoai.co/api/bots/<BOT_ID>/webhook/logs" \
+  -H "Authorization: Bearer <ADMIN_JWT>"
+```
+
+Webhook 呼叫必需 headers：
+- `x-api-key`: 租戶 API key
+- `Authorization: Bearer <bot channel bearerToken>`
+- `x-timestamp`: unix timestamp (seconds)
+- `x-signature`: HMAC-SHA256 signature
+
+簽章內容格式：
+`{timestamp}.{botId}.{externalUserId}.{message}`
+
+可用腳本產生簽章：
+
+```bash
+bash scripts/sign-webhook.sh <HMAC_SECRET> <BOT_ID> <USER_ID> <MESSAGE>
+```
+
+## 7. 資料庫備份與回復
+
+### 手動備份
+
+```bash
+bash scripts/backup-db.sh
+```
+
+### 手動回復
+
+```bash
+bash scripts/restore-db.sh backups/omnibot_YYYYMMDD_HHMMSS.sql.gz
+```
+
+### 備份輪替（保留 14 天）
+
+```bash
+bash scripts/backup-rotation.sh 14
+```
+
+### 建議排程（crontab）
+
+```bash
+0 3 * * * cd ~/omnichat && bash scripts/backup-db.sh && bash scripts/backup-rotation.sh 14
+```
+
+## 8. 緊急回復 (Rollback)
 
 1. 切回上一個可用 commit
 2. 重建核心服務
