@@ -21,6 +21,7 @@ import { useState } from 'react'
 import { useAuthStore } from '../store/auth'
 import { useLanguageStore } from '../store/language'
 import LanguageSwitcher from './LanguageSwitcher'
+import WebsiteGuideAssistant from './WebsiteGuideAssistant'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
@@ -120,6 +121,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className={`flex-1 ${sidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
         {children}
       </main>
+
+      <WebsiteGuideAssistant />
     </div>
   )
 }
