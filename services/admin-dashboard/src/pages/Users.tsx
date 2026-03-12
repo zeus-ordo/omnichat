@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { useLanguageStore } from '../store/language'
-import { Users as UsersIcon, Plus, Edit2, Trash2, Shield, Mail, User, X, Check } from 'lucide-react'
+import { Users as UsersIcon, Plus, Edit2, Trash2, Shield, Mail, User, X, Check, Eye, EyeOff } from 'lucide-react'
 
 interface User {
   id: string
@@ -24,6 +24,7 @@ export default function Users() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({ email: '', password: '', name: '', role: 'agent' })
   const { t } = useLanguageStore()
 
@@ -55,6 +56,7 @@ export default function Users() {
       }
       setShowModal(false)
       setEditingUser(null)
+      setShowPassword(false)
       setFormData({ email: '', password: '', name: '', role: 'agent' })
       loadUsers()
     } catch (error: any) {
@@ -74,6 +76,7 @@ export default function Users() {
 
   const openEditModal = (user: User) => {
     setEditingUser(user)
+    setShowPassword(false)
     setFormData({ email: user.email, password: '', name: user.name || '', role: user.role })
     setShowModal(true)
   }
@@ -86,7 +89,12 @@ export default function Users() {
           <p className="page-header-subtitle">{t('manageTeamMembers') || '管理團隊成員和權限'}</p>
         </div>
         <button
-          onClick={() => { setEditingUser(null); setFormData({ email: '', password: '', name: '', role: 'agent' }); setShowModal(true) }}
+          onClick={() => {
+            setEditingUser(null)
+            setShowPassword(false)
+            setFormData({ email: '', password: '', name: '', role: 'agent' })
+            setShowModal(true)
+          }}
           className="btn-primary flex items-center gap-2"
         >
           <Plus size={20} />
@@ -200,13 +208,23 @@ export default function Users() {
               {!editingUser && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('password') || '密碼'}</label>
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="input-field"
-                    required={!editingUser}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="input-field pr-11"
+                      required={!editingUser}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700"
+                      aria-label={showPassword ? (t('hidePassword') || 'Hide password') : (t('showPassword') || 'Show password')}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
               )}
               <div>
