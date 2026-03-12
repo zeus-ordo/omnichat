@@ -3,10 +3,11 @@ import {
   MessageSquare, 
   BarChart3, 
   BookOpen, 
-  Settings, 
+  Settings,
   Plug,
   LogOut,
   Menu,
+  X,
   Sparkles,
   ClipboardList,
   Bot,
@@ -28,6 +29,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { logout, user } = useAuthStore()
   const { t } = useLanguageStore()
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const navItems = [
     { path: '/', icon: BarChart3, labelKey: 'dashboard', color: 'text-primary-500' },
@@ -47,8 +49,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-20 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      <button
+        onClick={() => setMobileMenuOpen(true)}
+        className="fixed top-3 left-3 z-30 md:hidden p-2.5 rounded-lg bg-white shadow border border-gray-200"
+        aria-label="Open menu"
+      >
+        <Menu size={18} />
+      </button>
+
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 flex flex-col fixed h-screen transition-all duration-300 z-10`}>
+      <aside
+        className={`${sidebarOpen ? 'md:w-64' : 'md:w-20'} w-72 bg-white border-r border-gray-200 flex flex-col fixed h-screen transition-all duration-300 z-30 md:z-10 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+      >
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
           {sidebarOpen && (
@@ -59,8 +78,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <span className="font-bold text-lg">OmniChat</span>
             </div>
           )}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-lg hover:bg-gray-100">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-lg hover:bg-gray-100 hidden md:block">
             <Menu size={20} />
+          </button>
+          <button onClick={() => setMobileMenuOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 md:hidden">
+            <X size={18} />
           </button>
         </div>
 
@@ -74,6 +96,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <li key={item.path}>
                   <Link
                     to={item.path}
+                    onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       isActive 
                         ? 'bg-blue-50 text-blue-600' 
@@ -118,7 +141,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className={`flex-1 ${sidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
+      <main className={`flex-1 w-full ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'} ml-0 transition-all duration-300 pt-14 md:pt-0`}>
         {children}
       </main>
 

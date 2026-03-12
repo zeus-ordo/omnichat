@@ -76,23 +76,23 @@ export default function Settings() {
     <div className="page-shell">
       <h1 className="page-header-title mb-8">{t('settings')}</h1>
 
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-6 max-w-2xl w-full">
         {/* API Key */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">{t('apiKey')}</h2>
           <p className="text-sm text-gray-500 mb-4">
             {t('useThisApiKeyToAuthenticate')}
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={apiKey}
               readOnly
-              className="input-field flex-1 font-mono"
+              className="input-field flex-1 font-mono min-w-0"
             />
             <button
               onClick={copyToClipboard}
-              className="btn-secondary flex items-center gap-2"
+              className="btn-secondary flex items-center justify-center gap-2 whitespace-nowrap"
             >
               {copied ? <Check size={16} /> : <Copy size={16} />}
               {copied ? t('copied') : t('copy')}
@@ -189,7 +189,7 @@ export default function Settings() {
               />
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <button
                 type="button"
                 onClick={saveAssistantConfig}
@@ -220,7 +220,7 @@ export default function Settings() {
               placeholder={t('webhookUrlPlaceholder')}
               className="input-field"
             />
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button className="btn-primary">{t('addWebhook')}</button>
             </div>
           </div>

@@ -65,10 +65,10 @@ export default function Conversations() {
   })
 
   return (
-    <div className="h-[calc(100vh-2rem)] p-6 md:p-8">
-      <div className="h-full flex bg-white rounded-apple-xl border border-gray-200 overflow-hidden shadow-sm">
+    <div className="h-[calc(100vh-1rem)] sm:h-[calc(100vh-2rem)] p-3 sm:p-4 md:p-8">
+      <div className="h-full flex flex-col md:flex-row bg-white rounded-apple-xl border border-gray-200 overflow-hidden shadow-sm">
       {/* Conversations List */}
-      <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
+      <div className="w-full md:w-80 md:min-w-[320px] border-r border-gray-200 bg-white flex flex-col max-h-[38vh] md:max-h-none">
         <div className="p-4 border-b border-gray-200">
           <h1 className="text-xl font-bold">{t('conversations') || 'Conversations'}</h1>
           <input
@@ -116,7 +116,7 @@ export default function Conversations() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         {currentConversation ? (
           <>
             <div className="p-4 border-b border-gray-200 bg-white">
@@ -124,14 +124,14 @@ export default function Conversations() {
                 {currentConversation.channel || t('conversationLabel')} - {currentConversation.status}
               </h2>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
               {messages.map((message: any, index: number) => (
                 <div
                   key={index}
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
+                    className={`max-w-[86%] sm:max-w-[70%] rounded-lg p-2.5 sm:p-3 ${
                       message.role === 'user'
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-900'
@@ -146,7 +146,7 @@ export default function Conversations() {
                 </div>
               ))}
             </div>
-            <div className="p-4 border-t border-gray-200 bg-white">
+            <div className="p-3 sm:p-4 border-t border-gray-200 bg-white">
               <div className="flex gap-2">
                 <input
                   type="text"

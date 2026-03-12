@@ -42,11 +42,11 @@ body {
 
 @layer components {
   .page-shell {
-    @apply p-6 md:p-8;
+    @apply p-3 sm:p-4 md:p-8;
   }
 
   .page-header-title {
-    @apply text-2xl font-semibold text-gray-900 tracking-tight;
+    @apply text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight;
   }
 
   .page-header-subtitle {
@@ -54,7 +54,7 @@ body {
   }
 
   .modal-title {
-    @apply text-xl font-semibold text-gray-900;
+    @apply text-lg sm:text-xl font-semibold text-gray-900;
   }
 
   .interactive-row {

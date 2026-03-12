@@ -99,12 +99,12 @@ export default function Analytics() {
 
   return (
     <div className="page-shell space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <h1 className="page-header-title">{t('analytics') || 'Analytics'}</h1>
         <select
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
-          className="input-field"
+          className="input-field w-full sm:w-auto"
         >
           <option value={7}>{t('last7Days')}</option>
           <option value={30}>{t('last30Days')}</option>
@@ -231,7 +231,7 @@ export default function Analytics() {
                   <span className="font-medium">{model.model_used}</span>
                   <span className="text-sm text-gray-500">{model.total_responses} {t('responses')}</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
                   <div>
                     <p className="text-gray-500">{t('aiTokensUsed')}</p>
                     <p className="font-semibold">{formatNumber(model.total_tokens)}</p>
