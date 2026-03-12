@@ -15,27 +15,170 @@ export class TenantsService {
       throw new Error('Invalid schema name');
     }
 
-    const tables = [
-      'users',
-      'conversations',
-      'messages',
-      'documents',
-      'flows',
-      'flow_logs',
-      'surveys',
-      'survey_responses',
-      'message_templates',
-      'tickets',
-      'broadcasts',
-    ];
-
     await this.dataSource.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
 
-    for (const table of tables) {
-      await this.dataSource.query(
-        `CREATE TABLE IF NOT EXISTS "${schemaName}".${table} (LIKE tenant_demo.${table} INCLUDING ALL)`,
-      );
-    }
+    await this.dataSource.query(`
+      CREATE OR REPLACE FUNCTION update_updated_at_column()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        NEW.updated_at = NOW();
+        RETURN NEW;
+      END;
+      $$ language 'plpgsql';
+    `);
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".users (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        name VARCHAR(255),
+        role VARCHAR(50) NOT NULL DEFAULT 'agent' CHECK (role IN ('owner', 'admin', 'agent', 'viewer')),
+        is_active BOOLEAN DEFAULT true,
+        last_login_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".conversations (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        channel VARCHAR(50) NOT NULL DEFAULT 'web' CHECK (channel IN ('web', 'line', 'facebook', 'api')),
+        channel_user_id VARCHAR(255),
+        status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'closed', 'archived')),
+        assigned_agent_id UUID,
+        metadata JSONB DEFAULT '{}',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".messages (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        conversation_id UUID NOT NULL,
+        role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+        content TEXT NOT NULL,
+        metadata JSONB DEFAULT '{}',
+        tokens_used INTEGER DEFAULT 0,
+        model_used VARCHAR(100),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".documents (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        name VARCHAR(255) NOT NULL,
+        type VARCHAR(50) NOT NULL CHECK (type IN ('pdf', 'word', 'txt', 'url', 'html')),
+        status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'ready', 'error')),
+        file_url TEXT,
+        content_text TEXT,
+        error_message TEXT,
+        uploaded_by UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".flows (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        nodes JSONB DEFAULT '[]',
+        edges JSONB DEFAULT '[]',
+        is_active BOOLEAN DEFAULT false,
+        created_by UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".flow_logs (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        conversation_id UUID NOT NULL,
+        flow_id UUID NOT NULL,
+        node_id VARCHAR(100) NOT NULL,
+        node_type VARCHAR(50),
+        input_data JSONB DEFAULT '{}',
+        output_data JSONB DEFAULT '{}',
+        executed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".surveys (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        questions JSONB DEFAULT '[]',
+        trigger_keywords TEXT[] DEFAULT '{}',
+        is_active BOOLEAN DEFAULT true,
+        created_by UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".survey_responses (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        conversation_id UUID NOT NULL,
+        survey_id UUID NOT NULL,
+        answers JSONB DEFAULT '{}',
+        submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".message_templates (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        name VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        type VARCHAR(50) NOT NULL DEFAULT 'text' CHECK (type IN ('text', 'button', 'image', 'carousel')),
+        trigger_keyword VARCHAR(100),
+        is_active BOOLEAN DEFAULT true,
+        created_by UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".tickets (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        conversation_id UUID,
+        subject VARCHAR(255) NOT NULL,
+        description TEXT,
+        status VARCHAR(50) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
+        priority VARCHAR(20) NOT NULL DEFAULT 'medium' CHECK (priority IN ('high', 'medium', 'low')),
+        assigned_agent_id UUID,
+        created_by UUID,
+        resolved_at TIMESTAMP WITH TIME ZONE,
+        closed_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".broadcasts (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        subject VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        channel VARCHAR(50) NOT NULL DEFAULT 'all' CHECK (channel IN ('all', 'web', 'line', 'facebook', 'api')),
+        status VARCHAR(50) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'scheduled', 'sent', 'cancelled')),
+        scheduled_at TIMESTAMP WITH TIME ZONE,
+        sent_at TIMESTAMP WITH TIME ZONE,
+        recipient_count INTEGER DEFAULT 0,
+        created_by UUID,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
 
     const triggerTables = [
       'users',
