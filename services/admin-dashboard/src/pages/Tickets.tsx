@@ -135,7 +135,7 @@ export default function Tickets() {
               key={ticket.id}
               className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="flex items-start gap-3">
                   {getStatusIcon(ticket.status)}
                   <div>
@@ -158,7 +158,7 @@ export default function Tickets() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
                 {ticket.status === 'open' && (
                   <button
                     onClick={() => updateTicketStatus(ticket.id, 'in_progress')}
@@ -191,8 +191,8 @@ export default function Tickets() {
 
       {/* Create Ticket Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h2 className="modal-title mb-4">{t('createNewTicket')}</h2>
             <form onSubmit={createTicket}>
               <div className="mb-4">

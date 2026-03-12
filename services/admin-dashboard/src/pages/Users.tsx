@@ -107,7 +107,7 @@ export default function Users() {
       ) : (
         <div className="bg-white rounded-apple-xl shadow-apple-lg overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px]">
+          <table className="w-full min-w-[720px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('user') || '使用者'}</th>
@@ -183,8 +183,8 @@ export default function Users() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-apple-xl shadow-apple-lg w-full max-w-md p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-apple-xl shadow-apple-lg w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="modal-title">
                 {editingUser ? (t('editUser') || '編輯使用者') : (t('addUser') || '新增使用者')}

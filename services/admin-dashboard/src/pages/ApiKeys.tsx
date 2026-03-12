@@ -77,7 +77,7 @@ export default function ApiKeys() {
         </div>
         <button
           onClick={() => { setFormData({ name: '', expires_at: '' }); setShowModal(true) }}
-          className="btn-primary flex items-center gap-2"
+          className="btn-primary flex items-center gap-2 whitespace-nowrap"
         >
           <Plus size={20} />
           {t('createApiKey') || '建立 API Key'}
@@ -94,7 +94,7 @@ export default function ApiKeys() {
               <p className="text-sm text-green-700 mt-1">
                 {t('copyApiKeyNotice') || '請立即複製並妥善保存，此 Key 之後將無法再次查看。'}
               </p>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-col sm:flex-row gap-2">
                 <code className="flex-1 p-2 bg-white border border-green-300 rounded text-sm font-mono break-all">
                   {newKey}
                 </code>
@@ -118,7 +118,7 @@ export default function ApiKeys() {
       ) : (
         <div className="bg-white rounded-apple-xl shadow-apple-lg overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px]">
+          <table className="w-full min-w-[680px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('name') || '名稱'}</th>
@@ -173,8 +173,8 @@ export default function ApiKeys() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-apple-xl shadow-apple-lg w-full max-w-md p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-apple-xl shadow-apple-lg w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="modal-title">{t('createApiKey') || '建立 API Key'}</h2>
               <button onClick={() => setShowModal(false)} className="icon-btn">
