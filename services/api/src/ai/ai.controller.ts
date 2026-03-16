@@ -143,21 +143,30 @@ export class AiController {
           .slice(-12)
       : [];
 
-    const aiResponse = await this.aiService.chat(
-      body.message,
-      safeHistory,
-      {
-        ...tenantSettings,
-        system_prompt: `${assistantConfig.prompt}\n\n導覽範圍補充：${assistantConfig.scopeNotes}\n\n重要規則：只提供網站操作步驟與說明，不要輸出程式碼、JSON、SQL、設定檔片段。`,
-      },
-      { temperature: 0.2, max_tokens: 500, timeout_ms: 30000 },
-    );
+    try {
+      const aiResponse = await this.aiService.chat(
+        body.message,
+        safeHistory,
+        {
+          ...tenantSettings,
+          system_prompt: `${assistantConfig.prompt}\n\n導覽範圍補充：${assistantConfig.scopeNotes}\n\n重要規則：只提供網站操作步驟與說明，不要輸出程式碼、JSON、SQL、設定檔片段。`,
+        },
+        { temperature: 0.2, max_tokens: 500, timeout_ms: 30000 },
+      );
 
-    return {
-      content: this.sanitizeAssistantContent(aiResponse.content),
-      model: aiResponse.model,
-      tokens_used: aiResponse.tokens_used,
-    };
+      return {
+        content: this.sanitizeAssistantContent(aiResponse.content),
+        model: aiResponse.model,
+        tokens_used: aiResponse.tokens_used,
+      };
+    } catch {
+      return {
+        content:
+          '目前小助手暫時無法連線到 AI 服務。請稍後再試，或通知管理員檢查 OpenAI API Key 設定。',
+        model: 'fallback',
+        tokens_used: 0,
+      };
+    }
   }
 
   @Post('chat')
