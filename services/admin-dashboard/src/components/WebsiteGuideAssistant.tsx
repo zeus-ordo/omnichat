@@ -59,20 +59,32 @@ export default function WebsiteGuideAssistant() {
     setLoading(true)
 
     try {
-      const response = await api.post('/ai/assistant/chat', {
-        message: text,
-        history: nextMessages,
-      })
+      const response = await api.post(
+        '/ai/assistant/chat',
+        {
+          message: text,
+          history: nextMessages,
+        },
+        {
+          timeout: 45000,
+        },
+      )
 
       const content = response.data?.content || '目前無法取得回覆，請稍後再試。'
       setMessages((prev) => [...prev, { role: 'assistant', content }])
     } catch (error: any) {
       const timeout = error?.code === 'ECONNABORTED'
+      const serverMessage =
+        error?.response?.data?.content ||
+        error?.response?.data?.message ||
+        ''
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: timeout ? '回覆逾時，請縮短問題或再試一次。' : '連線暫時失敗，請再試一次。',
+          content:
+            (typeof serverMessage === 'string' && serverMessage.trim()) ||
+            (timeout ? '回覆逾時，請縮短問題或再試一次。' : '連線暫時失敗，請再試一次。'),
         },
       ])
     } finally {

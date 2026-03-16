@@ -151,7 +151,7 @@ export class AiController {
           ...tenantSettings,
           system_prompt: `${assistantConfig.prompt}\n\n導覽範圍補充：${assistantConfig.scopeNotes}\n\n重要規則：只提供網站操作步驟與說明，不要輸出程式碼、JSON、SQL、設定檔片段。`,
         },
-        { temperature: 0.2, max_tokens: 500, timeout_ms: 30000 },
+        { temperature: 0.2, max_tokens: 500, timeout_ms: 20000 },
       );
 
       return {
