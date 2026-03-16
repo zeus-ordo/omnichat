@@ -184,6 +184,38 @@ export default function Surveys() {
     })
   }
 
+  const updateQuestionOption = (questionId: string, optionIndex: number, value: string) => {
+    setFormData({
+      ...formData,
+      questions: formData.questions.map((question) => {
+        if (question.id !== questionId) return question
+        const options = [...(question.options || [])]
+        options[optionIndex] = value
+        return { ...question, options }
+      }),
+    })
+  }
+
+  const addQuestionOption = (questionId: string) => {
+    setFormData({
+      ...formData,
+      questions: formData.questions.map((question) => {
+        if (question.id !== questionId) return question
+        return { ...question, options: [...(question.options || []), `Option ${(question.options?.length || 0) + 1}`] }
+      }),
+    })
+  }
+
+  const removeQuestionOption = (questionId: string, optionIndex: number) => {
+    setFormData({
+      ...formData,
+      questions: formData.questions.map((question) => {
+        if (question.id !== questionId) return question
+        return { ...question, options: (question.options || []).filter((_, idx) => idx !== optionIndex) }
+      }),
+    })
+  }
+
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center">
@@ -436,6 +468,38 @@ export default function Surveys() {
                               {t('required')}
                             </label>
                           </div>
+
+                          {question.type === 'choice' && (
+                            <div className="space-y-2 rounded-lg border border-gray-200 bg-white p-3">
+                              <p className="text-xs font-medium text-gray-600">選項</p>
+                              {(question.options || []).map((option, optionIndex) => (
+                                <div key={`${question.id}-opt-${optionIndex}`} className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={option}
+                                    onChange={(e) => updateQuestionOption(question.id, optionIndex, e.target.value)}
+                                    className="input-field text-sm"
+                                    placeholder={`選項 ${optionIndex + 1}`}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeQuestionOption(question.id, optionIndex)}
+                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                    aria-label="Remove option"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => addQuestionOption(question.id)}
+                                className="text-xs text-primary-600 hover:text-primary-700"
+                              >
+                                + 新增選項
+                              </button>
+                            </div>
+                          )}
                         </div>
                         <button
                           type="button"

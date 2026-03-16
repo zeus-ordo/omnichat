@@ -57,10 +57,27 @@ export class AiController {
     const stored = settings.website_assistant || {};
 
     return {
-      prompt: (stored.prompt || settings.system_prompt || defaults.prompt).toString(),
+      prompt: (stored.prompt || defaults.prompt).toString(),
       welcomeMessage: (stored.welcomeMessage || defaults.welcomeMessage).toString(),
       scopeNotes: (stored.scopeNotes || defaults.scopeNotes).toString(),
     };
+  }
+
+  private sanitizeAssistantContent(raw: string): string {
+    const content = (raw || '').toString();
+
+    if (!content.trim()) {
+      return '目前無法取得回覆，請稍後再試。';
+    }
+
+    const withoutCodeBlocks = content.replace(/```[\s\S]*?```/g, '').trim();
+    const looksLikeCode = /function\s*\(|const\s+\w+\s*=|class\s+\w+|<\/?\w+>|import\s+\w+\s+from|\{\s*\n/.test(content);
+
+    if (looksLikeCode && withoutCodeBlocks.length < 40) {
+      return '我可以用步驟方式帶你操作，不會貼程式碼。請告訴我你要完成的目標（例如：建立機器人、串接 LINE、查看分析報表）。';
+    }
+
+    return withoutCodeBlocks || content;
   }
 
   @Get('assistant/config')
@@ -131,13 +148,13 @@ export class AiController {
       safeHistory,
       {
         ...tenantSettings,
-        system_prompt: `${assistantConfig.prompt}\n\n導覽範圍補充：${assistantConfig.scopeNotes}`,
+        system_prompt: `${assistantConfig.prompt}\n\n導覽範圍補充：${assistantConfig.scopeNotes}\n\n重要規則：只提供網站操作步驟與說明，不要輸出程式碼、JSON、SQL、設定檔片段。`,
       },
-      {},
+      { temperature: 0.2, max_tokens: 500, timeout_ms: 30000 },
     );
 
     return {
-      content: aiResponse.content,
+      content: this.sanitizeAssistantContent(aiResponse.content),
       model: aiResponse.model,
       tokens_used: aiResponse.tokens_used,
     };

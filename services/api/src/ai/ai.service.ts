@@ -11,6 +11,7 @@ interface ChatOptions {
   model?: string;
   temperature?: number;
   max_tokens?: number;
+  timeout_ms?: number;
 }
 
 @Injectable()
@@ -34,6 +35,8 @@ export class AiService {
     
     const model = options.model || tenantSettings?.default_model || 'gpt-4o';
     const temperature = options.temperature ?? 0.7;
+    const maxTokens = options.max_tokens ?? 600;
+    const timeout = options.timeout_ms ?? 30000;
 
     try {
       const response = await this.httpService.axiosRef.post(`${aiEngineUrl}/api/chat`, {
@@ -43,8 +46,9 @@ export class AiService {
         ],
         model,
         temperature,
+        max_tokens: maxTokens,
         tenant_settings: tenantSettings,
-      });
+      }, { timeout });
 
       return {
         content: response.data.message.content,

@@ -66,10 +66,14 @@ export default function WebsiteGuideAssistant() {
 
       const content = response.data?.content || '目前無法取得回覆，請稍後再試。'
       setMessages((prev) => [...prev, { role: 'assistant', content }])
-    } catch {
+    } catch (error: any) {
+      const timeout = error?.code === 'ECONNABORTED'
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: '連線暫時失敗，請再試一次。' },
+        {
+          role: 'assistant',
+          content: timeout ? '回覆逾時，請縮短問題或再試一次。' : '連線暫時失敗，請再試一次。',
+        },
       ])
     } finally {
       setLoading(false)
