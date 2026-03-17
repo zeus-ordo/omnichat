@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
+import { DataSource } from 'typeorm';
 
 interface LineEvent {
   type: string;
@@ -21,30 +22,71 @@ interface LineEvent {
 
 @Injectable()
 export class LineService {
-  private channelAccessToken: string;
-  private channelSecret: string;
+  private fallbackChannelAccessToken: string;
+  private fallbackChannelSecret: string;
 
   constructor(
     private configService: ConfigService,
     private httpService: HttpService,
+    private dataSource: DataSource,
   ) {
-    this.channelAccessToken = this.configService.get('LINE_CHANNEL_ACCESS_TOKEN') || '';
-    this.channelSecret = this.configService.get('LINE_CHANNEL_SECRET') || '';
+    this.fallbackChannelAccessToken = this.configService.get('LINE_CHANNEL_ACCESS_TOKEN') || '';
+    this.fallbackChannelSecret = this.configService.get('LINE_CHANNEL_SECRET') || '';
   }
 
-  async handleWebhook(body: any) {
+  async resolveLineConfig(
+    tenantSchema: string,
+    botId?: string,
+  ): Promise<{ channelAccessToken: string; channelSecret: string } | null> {
+    const rows = await this.dataSource.query(
+      `SELECT settings FROM tenants WHERE schema_name = $1 LIMIT 1`,
+      [tenantSchema],
+    );
+    const settings = rows?.[0]?.settings || {};
+    const bots = Array.isArray(settings?.website_bots) ? settings.website_bots : [];
+
+    const lineEnabledBots = bots.filter((bot: any) =>
+      Array.isArray(bot?.channels) &&
+      bot.channels.some((channel: any) => channel?.type === 'line' && channel?.enabled),
+    );
+
+    const selectedBot = botId
+      ? lineEnabledBots.find((bot: any) => bot?.id === botId)
+      : lineEnabledBots[0];
+
+    const token = selectedBot?.channelConfigs?.line?.channelAccessToken;
+    const secret = selectedBot?.channelConfigs?.line?.channelSecret;
+
+    if (token && secret) {
+      return {
+        channelAccessToken: String(token),
+        channelSecret: String(secret),
+      };
+    }
+
+    if (this.fallbackChannelAccessToken && this.fallbackChannelSecret) {
+      return {
+        channelAccessToken: this.fallbackChannelAccessToken,
+        channelSecret: this.fallbackChannelSecret,
+      };
+    }
+
+    return null;
+  }
+
+  async handleWebhook(body: any, channelAccessToken?: string) {
     const events: LineEvent[] = body.events || [];
     
     for (const event of events) {
       if (event.type === 'message' && event.message.type === 'text') {
-        await this.handleTextMessage(event);
+        await this.handleTextMessage(event, channelAccessToken);
       }
     }
 
     return { success: true };
   }
 
-  private async handleTextMessage(event: LineEvent) {
+  private async handleTextMessage(event: LineEvent, channelAccessToken?: string) {
     const userId = event.source.userId;
     const userMessage = event.message.text;
     const replyToken = event.replyToken;
@@ -57,12 +99,14 @@ export class LineService {
     // For now, just echo back (placeholder)
     console.log(`LINE message from ${userId}: ${userMessage}`);
     
-    // Example reply:
-    // await this.sendReply(replyToken, 'AI response here');
+    if (replyToken) {
+      await this.sendReply(replyToken, [`收到訊息：${userMessage}`], channelAccessToken);
+    }
   }
 
-  async sendReply(replyToken: string, messages: string[]) {
-    if (!this.channelAccessToken) {
+  async sendReply(replyToken: string, messages: string[], channelAccessToken?: string) {
+    const token = channelAccessToken || this.fallbackChannelAccessToken;
+    if (!token) {
       console.warn('LINE channel access token not configured');
       return;
     }
@@ -76,7 +120,7 @@ export class LineService {
         },
         {
           headers: {
-            'Authorization': `Bearer ${this.channelAccessToken}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         },
@@ -87,7 +131,7 @@ export class LineService {
   }
 
   async sendPushMessage(userId: string, messages: string[]) {
-    if (!this.channelAccessToken) {
+    if (!this.fallbackChannelAccessToken) {
       console.warn('LINE channel access token not configured');
       return;
     }
@@ -101,7 +145,7 @@ export class LineService {
         },
         {
           headers: {
-            'Authorization': `Bearer ${this.channelAccessToken}`,
+            'Authorization': `Bearer ${this.fallbackChannelAccessToken}`,
             'Content-Type': 'application/json',
           },
         },
@@ -111,11 +155,15 @@ export class LineService {
     }
   }
 
-  verifySignature(signature: string, body: string): boolean {
-    // Implement LINE signature verification
+  verifySignature(signature: string, body: string, channelSecret?: string): boolean {
+    const secret = channelSecret || this.fallbackChannelSecret;
+    if (!secret) {
+      return false;
+    }
+
     const crypto = require('crypto');
     const hash = crypto
-      .createHmac('SHA256', this.channelSecret)
+      .createHmac('SHA256', secret)
       .update(body)
       .digest('base64');
     return hash === signature;
