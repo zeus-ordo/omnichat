@@ -49,8 +49,18 @@ export class TenantMiddleware implements NestMiddleware {
         const tokenSchema = payload?.tenant_schema;
 
         if (tokenSchema && this.validateSchemaName(tokenSchema)) {
+          let tokenTenantId = payload?.tenant_id;
+
+          if (!tokenTenantId) {
+            const tenantRows = await this.dataSource.query(
+              `SELECT id FROM tenants WHERE schema_name = $1 LIMIT 1`,
+              [tokenSchema],
+            );
+            tokenTenantId = tenantRows?.[0]?.id || null;
+          }
+
           (req as any).tenantSchema = tokenSchema;
-          (req as any).tenantId = payload?.tenant_id;
+          (req as any).tenantId = tokenTenantId;
 
           const safeSchema = this.escapeIdentifier(tokenSchema);
           await this.dataSource.query(`SET search_path TO ${safeSchema}, public`);

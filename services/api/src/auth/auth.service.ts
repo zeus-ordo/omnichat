@@ -32,16 +32,25 @@ export class AuthService {
   private async findUserAcrossTenants(email: string, firstSchema?: string) {
     const tried = new Set<string>();
 
+    const tenantBySchema = async (schema: string) => {
+      const rows = await this.dataSource.query(
+        `SELECT id, schema_name FROM tenants WHERE schema_name = $1 LIMIT 1`,
+        [schema],
+      );
+      return rows?.[0] || null;
+    };
+
     if (firstSchema && this.isValidSchemaName(firstSchema)) {
       const firstUser = await this.findUserByEmailInSchema(email, firstSchema);
       tried.add(firstSchema);
       if (firstUser) {
-        return { user: firstUser, tenantSchema: firstSchema };
+        const tenant = await tenantBySchema(firstSchema);
+        return { user: firstUser, tenantSchema: firstSchema, tenantId: tenant?.id || null };
       }
     }
 
     const tenants = await this.dataSource.query(
-      `SELECT schema_name FROM tenants WHERE status = 'active' ORDER BY created_at DESC`,
+      `SELECT id, schema_name FROM tenants WHERE status = 'active' ORDER BY created_at DESC`,
     );
 
     for (const tenant of tenants) {
@@ -50,7 +59,7 @@ export class AuthService {
 
       const found = await this.findUserByEmailInSchema(email, schema);
       if (found) {
-        return { user: found, tenantSchema: schema };
+        return { user: found, tenantSchema: schema, tenantId: tenant.id };
       }
     }
 
@@ -257,7 +266,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { user, tenantSchema: resolvedTenantSchema } = account;
+    const { user, tenantSchema: resolvedTenantSchema, tenantId } = account;
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
@@ -271,6 +280,7 @@ export class AuthService {
       email: user.email,
       role: user.role,
       tenant_schema: resolvedTenantSchema,
+      tenant_id: tenantId,
     };
     
     return {
