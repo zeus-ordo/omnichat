@@ -23,6 +23,7 @@ async function bootstrap() {
   const corsOrigins = getCorsOrigins();
   
   const app = await NestFactory.create(AppModule, {
+    rawBody: true,
     cors: {
       origin: corsOrigins,
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
