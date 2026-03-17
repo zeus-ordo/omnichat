@@ -44,6 +44,20 @@ export default function ApiKeys() {
         expires_at: formData.expires_at || null,
       })
       setNewKey(response.data.api_key)
+
+      try {
+        const historyRaw = localStorage.getItem('omnibot-api-key-history') || '[]'
+        const history = JSON.parse(historyRaw) as Array<{ name: string; key: string }>
+        const next = [
+          { name: formData.name || response.data.name || 'API Key', key: response.data.api_key as string },
+          ...history.filter((item) => item.key !== response.data.api_key),
+        ].slice(0, 10)
+        localStorage.setItem('omnibot-api-key-history', JSON.stringify(next))
+        localStorage.setItem('omnibot-line-webhook-api-key', response.data.api_key as string)
+      } catch {
+        // ignore localStorage parse/write failure
+      }
+
       setShowModal(false)
       setFormData({ name: '', expires_at: '' })
       loadApiKeys()

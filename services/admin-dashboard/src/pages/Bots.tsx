@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Plus,
   Bot,
-  Settings,
   Trash2,
   Edit2,
   X,
@@ -10,6 +9,8 @@ import {
   Database,
   Wifi,
   WifiOff,
+  Copy,
+  Check,
 } from 'lucide-react'
 import { api } from '../lib/api'
 import { useLanguageStore } from '../store/language'
@@ -63,6 +64,11 @@ type KnowledgeDoc = {
   name: string
 }
 
+type ApiKeyItem = {
+  key: string
+  name: string
+}
+
 const modelOptions = [
   { value: 'GPT-4o', label: 'GPT-4o' },
   { value: 'GPT-4 Turbo', label: 'GPT-4 Turbo' },
@@ -80,16 +86,54 @@ export default function Bots() {
   const { t } = useLanguageStore()
   const [bots, setBots] = useState<BotItem[]>([])
   const [docs, setDocs] = useState<KnowledgeDoc[]>([])
+  const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([])
+  const [selectedApiKey, setSelectedApiKey] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingBot, setEditingBot] = useState<BotItem | null>(null)
   const [error, setError] = useState('')
+  const [copiedWebhookKey, setCopiedWebhookKey] = useState<string | null>(null)
+  const [configSaveStatus, setConfigSaveStatus] = useState<Record<string, 'saving' | 'saved' | 'error'>>({})
   const [formData, setFormData] = useState({
     name: '',
     model: 'GPT-4o',
     database: '',
   })
+
+  const baseOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+
+  const buildLineWebhookUrl = (botId: string) =>
+    `${baseOrigin}/api/webhooks/line?bot_id=${encodeURIComponent(botId)}&api_key=${encodeURIComponent(selectedApiKey || 'YOUR_API_KEY')}`
+
+  const maskApiKey = (key: string) => {
+    if (!key) return ''
+    if (key.length <= 12) return `${key.slice(0, 4)}...`
+    return `${key.slice(0, 8)}...${key.slice(-4)}`
+  }
+
+  const buildLineWebhookDisplayUrl = (botId: string) => {
+    const masked = selectedApiKey ? maskApiKey(selectedApiKey) : 'YOUR_API_KEY'
+    return `${baseOrigin}/api/webhooks/line?bot_id=${encodeURIComponent(botId)}&api_key=${encodeURIComponent(masked)}`
+  }
+
+  const buildApiWebhookUrl = (botId: string) =>
+    `${baseOrigin}/api/bots/${encodeURIComponent(botId)}/webhook`
+
+  const copyWebhookUrl = async (copyKey: string, url: string) => {
+    await navigator.clipboard.writeText(url)
+    setCopiedWebhookKey(copyKey)
+    setTimeout(() => setCopiedWebhookKey(null), 2000)
+  }
+
+  const handleApiKeyChange = (value: string) => {
+    setSelectedApiKey(value)
+    if (value) {
+      localStorage.setItem('omnibot-line-webhook-api-key', value)
+    } else {
+      localStorage.removeItem('omnibot-line-webhook-api-key')
+    }
+  }
 
   const docMap = useMemo(() => {
     const map = new Map<string, string>()
@@ -98,6 +142,28 @@ export default function Bots() {
   }, [docs])
 
   useEffect(() => {
+    try {
+      const storedKey = localStorage.getItem('omnibot-line-webhook-api-key') || ''
+      const historyRaw = localStorage.getItem('omnibot-api-key-history') || '[]'
+      const history = JSON.parse(historyRaw) as Array<{ name?: string; key?: string }>
+      const validHistory = history
+        .filter((item) => item && typeof item.key === 'string' && item.key.trim())
+        .map((item, index) => ({
+          key: String(item.key),
+          name: String(item.name || `API Key ${index + 1}`),
+        }))
+
+      setApiKeys(validHistory)
+
+      if (storedKey) {
+        setSelectedApiKey(storedKey)
+      } else if (validHistory.length > 0) {
+        setSelectedApiKey(validHistory[0].key)
+      }
+    } catch {
+      setApiKeys([])
+    }
+
     const load = async () => {
       setLoading(true)
       try {
@@ -118,13 +184,16 @@ export default function Bots() {
     void load()
   }, [])
 
-  const persistUpdate = async (id: string, payload: Partial<BotItem>) => {
+
+  const persistUpdate = async (id: string, payload: Partial<BotItem>): Promise<boolean> => {
     try {
       const response = await api.put(`/bots/${id}`, payload)
       const updated = response.data as BotItem
       setBots((prev) => prev.map((item) => (item.id === id ? updated : item)))
+      return true
     } catch (err) {
       setError(getErrorMessage(err, '更新機器人失敗'))
+      return false
     }
   }
 
@@ -148,6 +217,9 @@ export default function Bots() {
     key: string,
     value: string,
   ) => {
+    const statusKey = `${bot.id}-${channelType}-${key}`
+    setConfigSaveStatus((prev) => ({ ...prev, [statusKey]: 'saving' }))
+
     const current = bot.channelConfigs || {}
     const next = {
       ...current,
@@ -157,7 +229,15 @@ export default function Bots() {
       },
     }
 
-    await persistUpdate(bot.id, { channelConfigs: next })
+    const ok = await persistUpdate(bot.id, { channelConfigs: next })
+    setConfigSaveStatus((prev) => ({ ...prev, [statusKey]: ok ? 'saved' : 'error' }))
+    setTimeout(() => {
+      setConfigSaveStatus((prev) => {
+        const clone = { ...prev }
+        delete clone[statusKey]
+        return clone
+      })
+    }, 2000)
   }
 
   const handleCreateBot = () => {
@@ -313,31 +393,95 @@ export default function Bots() {
 
                 <div className="space-y-3 rounded-xl border border-gray-100 p-3">
                   <p className="text-xs font-medium text-gray-600">Channel 參數（每個機器人獨立）</p>
+                  <p className="text-[11px] text-gray-400">欄位輸入後點擊空白處會自動儲存。</p>
                   {bot.channels
                     .filter((channel) => channel.enabled)
                     .map((channel) => (
                       <div key={`${bot.id}-config-${channel.type}`} className="space-y-2">
                         <p className="text-xs text-gray-500">{channel.name}</p>
-                        {(channelConfigFields[channel.type] || []).map((field) => (
-                          <input
-                            key={`${channel.type}-${field.key}`}
-                            className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-xs"
-                            placeholder={field.placeholder}
-                            defaultValue={bot.channelConfigs?.[channel.type]?.[field.key] || ''}
-                            onBlur={(event) =>
-                              void handleChannelConfigChange(
-                                bot,
-                                channel.type,
-                                field.key,
-                                event.currentTarget.value,
-                              )
-                            }
-                          />
-                        ))}
+                        {(channelConfigFields[channel.type] || []).map((field) => {
+                          const saveKey = `${bot.id}-${channel.type}-${field.key}`
+                          const saveStatus = configSaveStatus[saveKey]
+
+                          return (
+                            <div key={`${channel.type}-${field.key}`} className="space-y-1">
+                              <input
+                                className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-xs"
+                                placeholder={field.placeholder}
+                                defaultValue={bot.channelConfigs?.[channel.type]?.[field.key] || ''}
+                                onBlur={(event) =>
+                                  void handleChannelConfigChange(
+                                    bot,
+                                    channel.type,
+                                    field.key,
+                                    event.currentTarget.value,
+                                  )
+                                }
+                              />
+                              {saveStatus === 'saving' && <p className="text-[11px] text-blue-500">儲存中...</p>}
+                              {saveStatus === 'saved' && <p className="text-[11px] text-green-600">已儲存</p>}
+                              {saveStatus === 'error' && <p className="text-[11px] text-red-500">儲存失敗</p>}
+                            </div>
+                          )
+                        })}
+                        {channel.type === 'line' && (
+                          <div className="rounded-lg border border-gray-200 bg-gray-50 p-2">
+                            <p className="text-[11px] text-gray-500 mb-1">LINE Webhook URL（可先選擇已儲存的 API Key）</p>
+                            <div className="grid grid-cols-1 gap-2 mb-2">
+                              {apiKeys.length > 0 && (
+                                <select
+                                  value={selectedApiKey}
+                                  onChange={(event) => handleApiKeyChange(event.target.value)}
+                                  className="w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-[11px]"
+                                >
+                                  <option value="">選擇已儲存 API Key</option>
+                                  {apiKeys.map((item) => (
+                                    <option key={`${item.name}-${item.key}`} value={item.key}>
+                                      {item.name} ({maskApiKey(item.key)})
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+                              <input
+                                value={selectedApiKey}
+                                onChange={(event) => handleApiKeyChange(event.target.value)}
+                                type="password"
+                                className="w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-[11px]"
+                                placeholder="貼上 API Key（omni_xxx）"
+                              />
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <code className="text-[11px] text-gray-700 break-all flex-1">{buildLineWebhookDisplayUrl(bot.id)}</code>
+                              <button
+                                type="button"
+                                onClick={() => void copyWebhookUrl(`${bot.id}-line`, buildLineWebhookUrl(bot.id))}
+                                className="p-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-100"
+                                title="複製 LINE Webhook URL"
+                              >
+                                {copiedWebhookKey === `${bot.id}-line` ? <Check size={12} /> : <Copy size={12} />}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                         {channel.type === 'api' && (
-                          <p className="text-[11px] text-gray-400">
-                            Webhook 入口：<code>/api/bots/{bot.id}/webhook</code>，請求需帶 x-api-key、Bearer token、x-timestamp、x-signature。
-                          </p>
+                          <div className="space-y-2">
+                            <p className="text-[11px] text-gray-400">
+                              API Webhook 入口需帶 x-api-key、Bearer token、x-timestamp、x-signature。
+                            </p>
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-2">
+                              <div className="flex items-start gap-2">
+                                <code className="text-[11px] text-gray-700 break-all flex-1">{buildApiWebhookUrl(bot.id)}</code>
+                                <button
+                                  type="button"
+                                  onClick={() => void copyWebhookUrl(`${bot.id}-api`, buildApiWebhookUrl(bot.id))}
+                                  className="p-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-100"
+                                  title="複製 API Webhook URL"
+                                >
+                                  {copiedWebhookKey === `${bot.id}-api` ? <Check size={12} /> : <Copy size={12} />}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
                         )}
                       </div>
                     ))}
