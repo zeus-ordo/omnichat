@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AiService } from './ai.service';
 import { AiController } from './ai.controller';
 import { SurveysModule } from '../surveys/surveys.module';
+import { AssistantActionsModule } from '../assistant-actions/assistant-actions.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { SurveysModule } from '../surveys/surveys.module';
     }),
     ConfigModule,
     SurveysModule,
+    AssistantActionsModule,
   ],
   controllers: [AiController],
   providers: [AiService],

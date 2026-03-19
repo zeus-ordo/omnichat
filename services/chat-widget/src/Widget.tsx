@@ -8,6 +8,23 @@ interface Message {
   surveyData?: SurveyData
 }
 
+interface ActionCard {
+  actionId: string
+  confirmationToken?: string
+  preview: string
+  riskLevel: 'low' | 'medium' | 'high'
+}
+
+interface ActionHistoryEntry {
+  id: string
+  action_type: string
+  risk_level: 'low' | 'medium' | 'high'
+  status: string
+  created_at: string
+  request_message?: string | null
+  error_message?: string | null
+}
+
 interface SurveyData {
   surveyId?: string
   title: string
@@ -26,15 +43,55 @@ interface Question {
 interface WidgetProps {
   apiKey: string
   position?: 'bottom-right' | 'bottom-left'
+  authToken?: string
 }
 
-export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProps) {
+const API_BASE = (import.meta.env.VITE_API_URL as string) || '/api'
+
+const getStoredAuthToken = (): string | null => {
+  try {
+    const raw = window.localStorage.getItem('omnibot-auth')
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed?.state?.token || null
+  } catch {
+    return null
+  }
+}
+
+const extractActionCard = (content: string): ActionCard | null => {
+  const match = content.match(/(?:確認|confirm)\s+([0-9a-fA-F-]{36})(?:\s+([A-Za-z0-9]{8}))?/i)
+  if (!match) return null
+
+  const preview = content.replace(/\n?\s*若要套用，請回覆：?.*$/i, '').trim() || '待確認操作'
+  let riskLevel: 'low' | 'medium' | 'high' = 'low'
+
+  if (/(delete|remove|disable|password|secret|token|api[_\s-]?key|channel secret|撤銷|停用|刪除|密碼|金鑰)/i.test(preview)) {
+    riskLevel = 'high'
+  } else if (/(update|toggle|config|bind|setting|修改|更新|綁定|設定|切換)/i.test(preview)) {
+    riskLevel = 'medium'
+  }
+
+  return {
+    actionId: match[1],
+    confirmationToken: match[2],
+    preview,
+    riskLevel,
+  }
+}
+
+export default function Widget({ apiKey, position = 'bottom-right', authToken }: WidgetProps) {
+  const resolvedAuthToken = authToken || getStoredAuthToken()
+  const isAuthenticatedMode = Boolean(resolvedAuthToken)
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [activeSurvey, setActiveSurvey] = useState<SurveyData | null>(null)
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string>>({})
+  const [showHistory, setShowHistory] = useState(false)
+  const [actionHistory, setActionHistory] = useState<ActionHistoryEntry[]>([])
+  const [actionStatusMap, setActionStatusMap] = useState<Record<string, 'pending' | 'confirming' | 'completed' | 'failed'>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -44,6 +101,33 @@ export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProp
   useEffect(() => {
     scrollToBottom()
   }, [messages, activeSurvey])
+
+  useEffect(() => {
+    if (!isOpen || !isAuthenticatedMode || !resolvedAuthToken) return
+
+    const loadHistory = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/ai/assistant/actions/history`, {
+          headers: {
+            Authorization: `Bearer ${resolvedAuthToken}`,
+          },
+        })
+
+        if (!response.ok) {
+          return
+        }
+
+        const data = await response.json()
+        if (Array.isArray(data)) {
+          setActionHistory(data)
+        }
+      } catch {
+        // keep widget usable even if history load fails
+      }
+    }
+
+    void loadHistory()
+  }, [isOpen, isAuthenticatedMode, resolvedAuthToken])
 
   const parseSurveyFromContent = (content: string): { surveyData: SurveyData; surveyId: string } | null => {
     if (!content.includes('📋') && !content.includes('**')) return null
@@ -97,7 +181,7 @@ export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProp
           return
         } else {
           try {
-            await fetch(`http://localhost:8080/api/surveys/responses`, {
+            await fetch(`${API_BASE}/surveys/responses`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -125,14 +209,26 @@ export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProp
     setLoading(true)
 
     try {
-      const response = await fetch(`http://localhost:8080/api/ai/chat`, {
+      const requestBody = isAuthenticatedMode
+        ? {
+            message: userMessage,
+            history: [...messages, { role: 'user', content: userMessage }].map((message) => ({
+              role: message.role,
+              content: message.content,
+            })),
+          }
+        : { message: userMessage }
+
+      const response = await fetch(isAuthenticatedMode ? `${API_BASE}/ai/assistant/chat` : `${API_BASE}/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
+          ...(isAuthenticatedMode
+            ? { Authorization: `Bearer ${resolvedAuthToken}` }
+            : { 'X-API-Key': apiKey }),
         },
-        body: JSON.stringify({ message: userMessage }),
-})
+        body: JSON.stringify(requestBody),
+      })
 
       const data = await response.json()
       const responseContent = data.content || 'Sorry, I could not process your request.'
@@ -151,6 +247,11 @@ export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProp
         setSurveyAnswers({})
       } else {
         setMessages((prev) => [...prev, { role: 'assistant', content: responseContent }])
+
+        const actionCard = isAuthenticatedMode ? extractActionCard(responseContent) : null
+        if (actionCard) {
+          setActionStatusMap((prev) => ({ ...prev, [actionCard.actionId]: 'pending' }))
+        }
       }
     } catch (error) {
       setMessages((prev) => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }])
@@ -163,6 +264,76 @@ export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProp
     setMessages((prev) => [...prev, { role: 'assistant', content: 'Survey skipped. Feel free to ask more questions!' }])
     setActiveSurvey(null)
     setSurveyAnswers({})
+  }
+
+  const confirmAction = async (card: ActionCard) => {
+    if (!resolvedAuthToken) return
+
+    setActionStatusMap((prev) => ({ ...prev, [card.actionId]: 'confirming' }))
+    setLoading(true)
+
+    try {
+      const response = await fetch(`${API_BASE}/ai/assistant/actions/confirm/${card.actionId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${resolvedAuthToken}`,
+        },
+        body: JSON.stringify(card.confirmationToken ? { confirmationToken: card.confirmationToken } : {}),
+      })
+
+      const data = await response.json()
+      const content = response.ok
+        ? `已完成設定。動作：${data.actionType || card.actionId}`
+        : data.message || '確認失敗，請再試一次。'
+
+      setMessages((prev) => [...prev, { role: 'assistant', content }])
+      setActionStatusMap((prev) => ({
+        ...prev,
+        [card.actionId]: response.ok ? 'completed' : 'failed',
+      }))
+
+      const historyResponse = await fetch(`${API_BASE}/ai/assistant/actions/history`, {
+        headers: {
+          Authorization: `Bearer ${resolvedAuthToken}`,
+        },
+      })
+      if (historyResponse.ok) {
+        const historyData = await historyResponse.json()
+        if (Array.isArray(historyData)) {
+          setActionHistory(historyData)
+        }
+      }
+    } catch {
+      setMessages((prev) => [...prev, { role: 'assistant', content: '確認失敗，請再試一次。' }])
+      setActionStatusMap((prev) => ({ ...prev, [card.actionId]: 'failed' }))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const renderActionHistory = () => {
+    if (!isAuthenticatedMode || !showHistory) return null
+
+    return (
+      <div style={styles.historyPanel}>
+        <div style={styles.historyTitle}>Action History</div>
+        {actionHistory.length === 0 ? (
+          <div style={styles.historyEmpty}>No assistant actions yet.</div>
+        ) : (
+          actionHistory.slice(0, 8).map((item) => (
+            <div key={item.id} style={styles.historyItem}>
+              <div style={styles.historyRow}>
+                <span style={styles.historyAction}>{item.action_type}</span>
+                <span style={styles.historyStatus}>{item.status}</span>
+              </div>
+              <div style={styles.historyPreview}>{item.request_message || item.error_message || 'No preview available'}</div>
+              <div style={styles.historyMeta}>{new Date(item.created_at).toLocaleString()}</div>
+            </div>
+          ))
+        )}
+      </div>
+    )
   }
 
   const renderSurveyQuestion = () => {
@@ -225,6 +396,7 @@ export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProp
     )
   }
 
+
   const styles: Record<string, React.CSSProperties> = {
     container: {
       position: 'fixed',
@@ -268,6 +440,22 @@ export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProp
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
+      justifyContent: 'space-between',
+    },
+    headerInfo: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+    },
+    historyToggle: {
+      border: '1px solid rgba(255,255,255,0.35)',
+      backgroundColor: 'rgba(255,255,255,0.12)',
+      color: '#fff',
+      borderRadius: '999px',
+      padding: '6px 10px',
+      cursor: 'pointer',
+      fontSize: '12px',
+      fontWeight: 600,
     },
     messages: {
       flex: 1,
@@ -367,7 +555,133 @@ export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProp
       cursor: 'pointer',
       fontSize: '12px',
       width: '100%',
-    }
+    },
+    confirmationContainer: {
+      marginTop: '8px',
+      padding: '12px',
+      borderRadius: '12px',
+      backgroundColor: '#fef3c7',
+      border: '1px solid #f59e0b',
+    },
+    confirmationPreview: {
+      fontSize: '13px',
+      color: '#92400e',
+      marginBottom: '10px',
+      fontWeight: 500,
+    },
+    confirmationButtons: {
+      display: 'flex',
+      gap: '8px',
+    },
+    confirmButton: {
+      flex: 1,
+      padding: '8px 12px',
+      borderRadius: '8px',
+      border: 'none',
+      backgroundColor: '#10b981',
+      color: '#fff',
+      cursor: 'pointer',
+      fontSize: '13px',
+      fontWeight: 500,
+    },
+    cancelButton: {
+      flex: 1,
+      padding: '8px 12px',
+      borderRadius: '8px',
+      border: '1px solid #d1d5db',
+      backgroundColor: '#fff',
+      color: '#6b7280',
+      cursor: 'pointer',
+      fontSize: '13px',
+      fontWeight: 500,
+    },
+    confirmationResultSuccess: {
+      marginTop: '8px',
+      padding: '8px 12px',
+      borderRadius: '8px',
+      backgroundColor: '#d1fae5',
+      color: '#065f46',
+      fontSize: '13px',
+    },
+    confirmationResultError: {
+      marginTop: '8px',
+      padding: '8px 12px',
+      borderRadius: '8px',
+      backgroundColor: '#fee2e2',
+      color: '#991b1b',
+      fontSize: '13px',
+    },
+    riskBadge: {
+      display: 'inline-block',
+      padding: '2px 6px',
+      borderRadius: '4px',
+      fontSize: '10px',
+      fontWeight: 600,
+      marginLeft: '6px',
+      textTransform: 'uppercase',
+    },
+    riskHigh: {
+      backgroundColor: '#fee2e2',
+      color: '#dc2626',
+    },
+    riskMedium: {
+      backgroundColor: '#fef3c7',
+      color: '#d97706',
+    },
+    riskLow: {
+      backgroundColor: '#d1fae5',
+      color: '#059669',
+    },
+    historyPanel: {
+      backgroundColor: '#eff6ff',
+      border: '1px solid #bfdbfe',
+      borderRadius: '12px',
+      padding: '12px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+    },
+    historyTitle: {
+      fontSize: '12px',
+      fontWeight: 700,
+      color: '#1d4ed8',
+    },
+    historyEmpty: {
+      fontSize: '12px',
+      color: '#6b7280',
+    },
+    historyItem: {
+      backgroundColor: '#fff',
+      border: '1px solid #dbeafe',
+      borderRadius: '10px',
+      padding: '10px',
+    },
+    historyRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      gap: '8px',
+      marginBottom: '6px',
+    },
+    historyAction: {
+      fontSize: '12px',
+      fontWeight: 600,
+      color: '#1f2937',
+    },
+    historyStatus: {
+      fontSize: '11px',
+      color: '#2563eb',
+      textTransform: 'uppercase',
+    },
+    historyPreview: {
+      fontSize: '12px',
+      color: '#4b5563',
+      lineHeight: 1.4,
+    },
+    historyMeta: {
+      marginTop: '6px',
+      fontSize: '11px',
+      color: '#9ca3af',
+    },
   }
 
   return (
@@ -375,16 +689,26 @@ export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProp
       {isOpen && (
         <div style={styles.chatWindow}>
           <div style={styles.header}>
-            <div style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              🤖
+            <div style={styles.headerInfo}>
+              <div style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                🤖
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 16 }}>AI Assistant</div>
+                <div style={{ fontSize: 12, opacity: 0.8 }}>
+                  {isAuthenticatedMode ? 'Authenticated assistant mode' : 'Always here to help'}
+                </div>
+              </div>
             </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>AI Assistant</div>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>Always here to help</div>
-            </div>
+            {isAuthenticatedMode && (
+              <button style={styles.historyToggle} onClick={() => setShowHistory((prev) => !prev)}>
+                {showHistory ? 'Hide history' : 'History'}
+              </button>
+            )}
           </div>
 
           <div style={styles.messages}>
+            {renderActionHistory()}
             {messages.length === 0 && !activeSurvey && (
               <div style={{ textAlign: 'center', color: '#9ca3af', marginTop: 40 }}>
                 <div style={{ fontSize: 32, marginBottom: 8 }}>👋</div>
@@ -392,16 +716,63 @@ export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProp
               </div>
             )}
             {messages.map((msg, index) => (
-              <div
-                key={index}
-                style={{
-                  ...styles.message,
-                  alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                  backgroundColor: msg.role === 'user' ? '#0ea5e9' : '#f3f4f6',
-                  color: msg.role === 'user' ? '#fff' : '#1f2937',
-                }}
-              >
-                {msg.content}
+              <div key={index}>
+                <div
+                  style={{
+                    ...styles.message,
+                    alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                    backgroundColor: msg.role === 'user' ? '#0ea5e9' : '#f3f4f6',
+                    color: msg.role === 'user' ? '#fff' : '#1f2937',
+                  }}
+                >
+                  {msg.content}
+                </div>
+                {isAuthenticatedMode && msg.role === 'assistant' && (() => {
+                  const actionCard = extractActionCard(msg.content)
+                  if (!actionCard) return null
+
+                  const actionStatus = actionStatusMap[actionCard.actionId] || 'pending'
+
+                  return (
+                    <div style={styles.confirmationContainer}>
+                      <div style={styles.confirmationPreview}>
+                        {actionCard.preview}
+                        <span
+                          style={{
+                            ...styles.riskBadge,
+                            ...(actionCard.riskLevel === 'high'
+                              ? styles.riskHigh
+                              : actionCard.riskLevel === 'medium'
+                              ? styles.riskMedium
+                              : styles.riskLow),
+                          }}
+                        >
+                          {actionCard.riskLevel}
+                        </span>
+                      </div>
+                      <div style={styles.confirmationButtons}>
+                        <button
+                          onClick={() => void confirmAction(actionCard)}
+                          style={styles.confirmButton}
+                          disabled={loading || actionStatus === 'confirming' || actionStatus === 'completed'}
+                        >
+                          {actionStatus === 'completed'
+                            ? '已確認'
+                            : actionStatus === 'confirming'
+                            ? '確認中...'
+                            : '確認'}
+                        </button>
+                        <button
+                          onClick={() => setMessages((prev) => [...prev, { role: 'assistant', content: `已取消操作 ${actionCard.actionId}` }])}
+                          style={styles.cancelButton}
+                          disabled={loading || actionStatus === 'confirming'}
+                        >
+                          取消
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             ))}
             {loading && (
@@ -426,7 +797,11 @@ export default function Widget({ apiKey, position = 'bottom-right' }: WidgetProp
               disabled={loading}
               autoFocus
             />
-            <button onClick={sendMessage} style={styles.sendButton} disabled={loading || !input.trim()}>
+            <button 
+              onClick={sendMessage} 
+              style={styles.sendButton} 
+              disabled={loading || !input.trim()}
+            >
               Send
             </button>
           </div>
