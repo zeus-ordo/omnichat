@@ -7,12 +7,17 @@ import {
   Req,
   UseGuards,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
 import { AiService } from './ai.service';
 import { SurveysService } from '../surveys/surveys.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { AssistantActionsService } from '../assistant-actions/assistant-actions.service';
+import { AuthUser } from '../assistant-actions/assistant-actions.types';
 
 interface AssistantHistoryItem {
   role: 'user' | 'assistant';
@@ -38,6 +43,7 @@ export class AiController {
     private readonly aiService: AiService,
     private readonly dataSource: DataSource,
     private readonly surveysService: SurveysService,
+    private readonly assistantActionsService: AssistantActionsService,
   ) {}
 
   private getDefaultAssistantConfig(): AssistantConfig {
@@ -90,7 +96,8 @@ export class AiController {
   }
 
   @Put('assistant/config')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('owner', 'admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update website assistant config (admin/owner only)' })
   async updateAssistantConfig(
@@ -98,9 +105,6 @@ export class AiController {
     @Req() req: Request,
   ) {
     const user = (req as any).user;
-    if (!user || !['owner', 'admin'].includes(user.role)) {
-      throw new ForbiddenException('Only admin/owner can update assistant config');
-    }
 
     const tenantSchema = (req as any).tenantSchema;
     const tenantSettings = (req as any).tenantSettings || {};
@@ -135,7 +139,59 @@ export class AiController {
     @Req() req: Request,
   ) {
     const tenantSettings = (req as any).tenantSettings || {};
+    const tenantSchema = (req as any).tenantSchema as string | undefined;
+    const user = ((req as any).user || null) as AuthUser | null;
     const assistantConfig = this.resolveAssistantConfig(tenantSettings);
+
+    const incomingMessage = (body.message || '').trim();
+
+    if (tenantSchema && user?.sub && incomingMessage) {
+      const confirmMatch = incomingMessage.match(
+        /^(?:確認|confirm)\s+([0-9a-fA-F-]{36})(?:\s+([A-Za-z0-9]{8}))?$/i,
+      );
+      if (confirmMatch) {
+        const actionResult = await this.assistantActionsService.confirmAction(confirmMatch[1], {
+          tenantSchema,
+          user,
+          confirmationToken: confirmMatch[2],
+        });
+
+        return {
+          content: `已完成設定。動作：${actionResult.actionType}`,
+          model: 'assistant-actions',
+          tokens_used: 0,
+        };
+      }
+
+      try {
+        const actionPlan = await this.assistantActionsService.planAction(incomingMessage, {
+          tenantSchema,
+          user,
+        });
+
+        if (actionPlan.mode === 'executed') {
+          return {
+            content: `${actionPlan.preview}\n\n已立即完成。`,
+            model: 'assistant-actions',
+            tokens_used: 0,
+          };
+        }
+
+        const confirmationCommand = actionPlan.confirmationToken
+          ? `確認 ${actionPlan.actionId} ${actionPlan.confirmationToken}`
+          : `確認 ${actionPlan.actionId}`;
+
+        return {
+          content: `${actionPlan.preview}\n\n若要套用，請回覆：${confirmationCommand}`,
+          model: 'assistant-actions',
+          tokens_used: 0,
+        };
+      } catch (error) {
+        if (!(error instanceof BadRequestException)) {
+          throw error;
+        }
+      }
+    }
 
     const safeHistory = Array.isArray(body.history)
       ? body.history
@@ -145,7 +201,7 @@ export class AiController {
 
     try {
       const aiResponse = await this.aiService.chat(
-        body.message,
+        incomingMessage,
         safeHistory,
         {
           ...tenantSettings,

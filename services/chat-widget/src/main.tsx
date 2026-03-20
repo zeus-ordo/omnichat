@@ -2,6 +2,12 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import Widget from './Widget'
 
+type WidgetInitConfig = {
+  apiKey: string
+  position?: 'bottom-right' | 'bottom-left'
+  authToken?: string
+}
+
 // Auto-initialize with default config
 const root = document.getElementById('omnibot-widget-root')
 if (root) {
@@ -12,7 +18,7 @@ if (root) {
   )
 }
 
-export default function initWidget(config: { apiKey: string; position?: 'bottom-right' | 'bottom-left' }) {
+export default function initWidget(config: WidgetInitConfig) {
   const root = document.getElementById('omnibot-widget-root')
   if (root) {
     ReactDOM.createRoot(root).render(

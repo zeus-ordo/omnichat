@@ -15,6 +15,8 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { BotsService } from './bots.service';
 import { DataSource } from 'typeorm';
 import { AiService } from '../ai/ai.service';
@@ -125,16 +127,22 @@ export class BotsController {
   }
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles('owner', 'admin')
   create(@Req() req: Request, @Body() payload: any) {
     return this.botsService.create((req as any).tenantSchema, payload);
   }
 
   @Put(':id')
+  @UseGuards(RolesGuard)
+  @Roles('owner', 'admin')
   update(@Req() req: Request, @Param('id') id: string, @Body() payload: any) {
     return this.botsService.update((req as any).tenantSchema, id, payload);
   }
 
   @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles('owner', 'admin')
   remove(@Req() req: Request, @Param('id') id: string) {
     return this.botsService.remove((req as any).tenantSchema, id);
   }
@@ -321,6 +329,8 @@ export class BotsController {
   }
 
   @Get(':id/webhook/logs')
+  @UseGuards(RolesGuard)
+  @Roles('owner', 'admin')
   @ApiOperation({ summary: 'Get latest webhook logs for a bot' })
   async getWebhookLogs(@Req() req: Request, @Param('id') id: string) {
     const tenantSchema = (req as any).tenantSchema;

@@ -1,6 +1,9 @@
-import { Injectable, Controller, Get, Post, Param, Body, Req } from '@nestjs/common';
+import { Injectable, Controller, Get, Post, Param, Body, Req, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Injectable()
 export class ChannelsService {
@@ -40,9 +43,13 @@ export class ChannelsService {
   }
 }
 
+@ApiTags('Channels')
+@ApiBearerAuth()
 @Controller('channels')
+@UseGuards(JwtAuthGuard)
 export class ChannelsController {
   @Get()
+  @ApiOperation({ summary: 'Get all channels for tenant' })
   getChannels(@Req() req: Request) {
     const tenantSchema = (req as any).tenantSchema;
     const service = new ChannelsService(new DataSource({
@@ -57,6 +64,9 @@ export class ChannelsController {
   }
 
   @Post(':id/configure')
+  @UseGuards(RolesGuard)
+  @Roles('owner', 'admin')
+  @ApiOperation({ summary: 'Configure a channel' })
   configureChannel(
     @Param('id') id: string,
     @Body() config: any,

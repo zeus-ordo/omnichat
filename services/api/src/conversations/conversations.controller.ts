@@ -17,6 +17,8 @@ import {
   SendMessageDto,
 } from './dto/conversations.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Conversations')
 @Controller('conversations')
@@ -26,6 +28,8 @@ export class ConversationsController {
   constructor(private readonly conversationsService: ConversationsService) {}
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles('owner', 'admin', 'agent')
   @ApiOperation({ summary: 'Create new conversation' })
   async create(
     @Body() createDto: CreateConversationDto,
@@ -41,6 +45,8 @@ export class ConversationsController {
   }
 
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles('owner', 'admin', 'agent', 'viewer')
   @ApiOperation({ summary: 'List conversations' })
   async findAll(
     @Query() query: ConversationQueryDto,
@@ -51,6 +57,8 @@ export class ConversationsController {
   }
 
   @Get(':id')
+  @UseGuards(RolesGuard)
+  @Roles('owner', 'admin', 'agent', 'viewer')
   @ApiOperation({ summary: 'Get conversation by ID' })
   async findOne(@Param('id') id: string, @Req() req: Request) {
     const tenantSchema = (req as any).tenantSchema;
@@ -58,6 +66,8 @@ export class ConversationsController {
   }
 
   @Post(':id/messages')
+  @UseGuards(RolesGuard)
+  @Roles('owner', 'admin', 'agent')
   @ApiOperation({ summary: 'Send message to conversation' })
   async sendMessage(
     @Param('id') id: string,
@@ -75,6 +85,8 @@ export class ConversationsController {
   }
 
   @Post(':id/close')
+  @UseGuards(RolesGuard)
+  @Roles('owner', 'admin', 'agent')
   @ApiOperation({ summary: 'Close conversation' })
   async close(@Param('id') id: string, @Req() req: Request) {
     const tenantSchema = (req as any).tenantSchema;
@@ -82,6 +94,8 @@ export class ConversationsController {
   }
 
   @Put(':id/assign/:agentId')
+  @UseGuards(RolesGuard)
+  @Roles('owner', 'admin')
   @ApiOperation({ summary: 'Assign agent to conversation' })
   async assign(
     @Param('id') id: string,
